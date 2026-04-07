@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { post } from '@/lib/api';
+import API from '@/lib/api';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +13,7 @@ import { Card, CardContent } from '@/components/ui/card';
 export default function RegisterPage() {
 	const router = useRouter();
 	const [loading, setLoading] = useState(false);
+
 	const [form, setForm] = useState({
 		name: '',
 		email: '',
@@ -22,12 +23,14 @@ export default function RegisterPage() {
 	const handleRegister = async () => {
 		try {
 			setLoading(true);
-			await post('/auth/register', form);
+
+			await API.post('/auth/register', form);
 
 			alert('Registered successfully');
+
 			router.push('/login');
 		} catch (err: any) {
-			alert(err.message || 'Register failed');
+			alert(err?.response?.data?.message || 'Register failed');
 		} finally {
 			setLoading(false);
 		}
@@ -61,6 +64,12 @@ export default function RegisterPage() {
 						className='w-full'>
 						{loading ? 'Loading...' : 'Register'}
 					</Button>
+
+					<p
+						className='text-sm cursor-pointer text-center'
+						onClick={() => router.push('/login')}>
+						Already have an account
+					</p>
 				</CardContent>
 			</Card>
 		</div>

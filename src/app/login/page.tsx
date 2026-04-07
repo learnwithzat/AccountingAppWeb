@@ -4,7 +4,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { post } from '@/lib/api';
+import API from '@/lib/api';
 import { saveToken } from '@/lib/auth';
 
 import { Button } from '@/components/ui/button';
@@ -14,17 +14,19 @@ import { Card, CardContent } from '@/components/ui/card';
 export default function LoginPage() {
 	const router = useRouter();
 	const [loading, setLoading] = useState(false);
-	const [form, setForm] = useState({ email: '', password: '' });
+	const [form, setForm] = useState({ username: '', password: '' });
 
 	const handleLogin = async () => {
 		try {
 			setLoading(true);
-			const res = await post('/auth/login', form);
 
-			saveToken(res.access_token);
+			const res = await API.post('/auth/login', form);
+
+			saveToken(res.data.access_token);
+
 			router.push('/dashboard');
 		} catch (err: any) {
-			alert(err.message || 'Login failed');
+			alert(err?.response?.data?.message || 'Login failed');
 		} finally {
 			setLoading(false);
 		}
@@ -37,8 +39,8 @@ export default function LoginPage() {
 					<h1 className='text-xl font-bold'>Login</h1>
 
 					<Input
-						placeholder='Email'
-						onChange={(e) => setForm({ ...form, email: e.target.value })}
+						placeholder='Username'
+						onChange={(e) => setForm({ ...form, username: e.target.value })}
 					/>
 
 					<Input

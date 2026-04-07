@@ -1,19 +1,18 @@
 /** @format */
 
-const API = process.env.NEXT_PUBLIC_API_URL;
+import axios from 'axios';
 
-export const post = async (url: string, data: any) => {
-	const res = await fetch(`${API}${url}`, {
-		method: 'POST',
-		headers: {
-			'Content-Type': 'application/json',
-		},
-		body: JSON.stringify(data),
-	});
+const API = axios.create({
+	baseURL: process.env.NEXT_PUBLIC_API_URL + '/api',
+	withCredentials: true,
+});
 
-	if (!res.ok) {
-		throw new Error(await res.text());
+API.interceptors.request.use((config) => {
+	const token = localStorage.getItem('token');
+	if (token) {
+		config.headers.Authorization = `Bearer ${token}`;
 	}
+	return config;
+});
 
-	return res.json();
-};
+export default API;

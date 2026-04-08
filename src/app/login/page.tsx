@@ -10,6 +10,7 @@ import { saveToken } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
+import { Loader2 } from 'lucide-react'; // optional icon spinner
 
 export default function LoginPage() {
 	const router = useRouter();
@@ -33,10 +34,10 @@ export default function LoginPage() {
 	};
 
 	return (
-		<div className='flex h-screen items-center justify-center'>
+		<div className='flex h-screen items-center justify-center bg-gray-50'>
 			<Card className='w-[350px]'>
 				<CardContent className='space-y-4 p-6'>
-					<h1 className='text-xl font-bold'>Login</h1>
+					<h1 className='text-xl font-bold text-center'>Login</h1>
 
 					<Input
 						placeholder='Username'
@@ -52,12 +53,13 @@ export default function LoginPage() {
 					<Button
 						onClick={handleLogin}
 						disabled={loading}
-						className='w-full'>
-						{loading ? 'Loading...' : 'Login'}
+						className='w-full flex items-center justify-center space-x-2'>
+						{loading && <Loader2 className='h-5 w-5 animate-spin' />}
+						<span>{loading ? 'Logging in...' : 'Login'}</span>
 					</Button>
 
 					<p
-						className='text-sm cursor-pointer text-center'
+						className='text-sm cursor-pointer text-center text-blue-600 hover:underline'
 						onClick={() => router.push('/register')}>
 						Create account
 					</p>

@@ -15,18 +15,32 @@ export default function RegisterPage() {
 	const [loading, setLoading] = useState(false);
 
 	const [form, setForm] = useState({
-		name: '',
+		companyName: '',
+		username: '',
 		email: '',
+		phoneNumber: '',
 		password: '',
 	});
 
 	const handleRegister = async () => {
+		// 🔹 Basic validation
+		if (
+			!form.companyName ||
+			!form.username ||
+			!form.email ||
+			!form.phoneNumber ||
+			!form.password
+		) {
+			alert('Please fill all fields');
+			return;
+		}
+
 		try {
 			setLoading(true);
 
-			await API.post('/auth/register', form);
+			await API.post('/company/register', form);
 
-			alert('Registered successfully');
+			alert('Company registered successfully');
 
 			router.push('/login');
 		} catch (err: any) {
@@ -38,18 +52,31 @@ export default function RegisterPage() {
 
 	return (
 		<div className='flex h-screen items-center justify-center'>
-			<Card className='w-[350px]'>
+			<Card className='w-[380px]'>
 				<CardContent className='space-y-4 p-6'>
-					<h1 className='text-xl font-bold'>Register</h1>
+					<h1 className='text-xl font-bold text-center'>
+						Create Company Account
+					</h1>
 
 					<Input
-						placeholder='Name'
-						onChange={(e) => setForm({ ...form, name: e.target.value })}
+						placeholder='Company Name'
+						onChange={(e) => setForm({ ...form, companyName: e.target.value })}
+					/>
+
+					<Input
+						placeholder='Username'
+						onChange={(e) => setForm({ ...form, username: e.target.value })}
 					/>
 
 					<Input
 						placeholder='Email'
+						type='email'
 						onChange={(e) => setForm({ ...form, email: e.target.value })}
+					/>
+
+					<Input
+						placeholder='Phone Number'
+						onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })}
 					/>
 
 					<Input
@@ -62,13 +89,13 @@ export default function RegisterPage() {
 						onClick={handleRegister}
 						disabled={loading}
 						className='w-full'>
-						{loading ? 'Loading...' : 'Register'}
+						{loading ? 'Creating...' : 'Register Company'}
 					</Button>
 
 					<p
 						className='text-sm cursor-pointer text-center'
 						onClick={() => router.push('/login')}>
-						Already have an account
+						Already have an account?
 					</p>
 				</CardContent>
 			</Card>

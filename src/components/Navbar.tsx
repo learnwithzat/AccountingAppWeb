@@ -5,22 +5,15 @@ import Link from 'next/link';
 import { Menu, Bell, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-interface NavbarProps {
-	className?: string;
-	toggleSidebar: () => void;
-}
-
-export default function Navbar({ className = '', toggleSidebar }: NavbarProps) {
+export default function Navbar() {
 	return (
 		<header
 			className={cn(
-				'flex h-14 items-center justify-between border-b border-border bg-card px-4',
-				className
+				'flex h-14 items-center justify-between border-b border-border bg-card px-4'
 			)}>
 			{/* Left: hamburger + brand */}
 			<div className='flex items-center gap-3'>
 				<button
-					onClick={toggleSidebar}
 					aria-label='Toggle navigation menu'
 					className='flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition hover:bg-accent hover:text-accent-foreground md:hidden'>
 					<Menu className='h-5 w-5' />

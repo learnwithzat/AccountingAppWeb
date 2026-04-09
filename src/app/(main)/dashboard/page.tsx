@@ -1,7 +1,7 @@
 /** @format */
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { getToken, logout } from '@/lib/auth';
 import API from '@/lib/api';
@@ -60,14 +60,20 @@ export default function DashboardPage() {
 	const [loading, setLoading] = useState(true);
 	const [activeTab, setActiveTab] = useState<Tab>('overview');
 
-	const fetchCompanyStatus = async (companyId: string) => {
+	const fetchCompanyStatus = useCallback(async (companyId: string) => {
 		try {
 			const { data } = await API.get<CompanyStatus>(`/company/${companyId}`);
 			setCompanyStatus(data);
-		} catch (err: any) {
-			if (err.response?.status === 401) logout();
+		} catch (err: unknown) {
+			if (
+				err &&
+				typeof err === 'object' &&
+				'response' in err &&
+				(err as any).response?.status === 401
+			)
+				logout();
 		}
-	};
+	}, []);
 
 	useEffect(() => {
 		const token = getToken();
@@ -97,8 +103,7 @@ export default function DashboardPage() {
 		return () => {
 			if (intervalRef.current) clearInterval(intervalRef.current);
 		};
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [router]);
+	}, [router, fetchCompanyStatus]);
 
 	if (loading) {
 		return (

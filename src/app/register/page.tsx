@@ -2,17 +2,20 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, ChangeEvent, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import API from '@/lib/api';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
+import { AlertCircle, Loader2 } from 'lucide-react';
 
 export default function RegisterPage() {
 	const router = useRouter();
 	const [loading, setLoading] = useState(false);
+	const [error, setError] = useState<string | null>(null);
 
 	const [form, setForm] = useState({
 		companyName: '',
@@ -22,8 +25,15 @@ export default function RegisterPage() {
 		password: '',
 	});
 
-	const handleRegister = async () => {
-		// 🔹 Basic validation
+	const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+		const { name, value } = e.target;
+		setForm((prev) => ({ ...prev, [name]: value }));
+	};
+
+	const handleRegister = async (e: FormEvent) => {
+		e.preventDefault();
+
+		// Basic validation
 		if (
 			!form.companyName ||
 			!form.username ||
@@ -31,20 +41,19 @@ export default function RegisterPage() {
 			!form.phoneNumber ||
 			!form.password
 		) {
-			alert('Please fill all fields');
+			setError('Please fill all fields');
 			return;
 		}
 
 		try {
 			setLoading(true);
-
+			setError(null);
 			await API.post('/company/register', form);
-
-			alert('Company registered successfully');
-
 			router.push('/login');
-		} catch (err: any) {
-			alert(err?.response?.data?.message || 'Register failed');
+		} catch (err: unknown) {
+			const message =
+				(err as any)?.response?.data?.message ?? 'Registration failed';
+			setError(message);
 		} finally {
 			setLoading(false);
 		}
@@ -58,44 +67,69 @@ export default function RegisterPage() {
 						Create Company Account
 					</h1>
 
-					<Input
-						placeholder='Company Name'
-						onChange={(e) => setForm({ ...form, companyName: e.target.value })}
-					/>
+					{error && (
+						<div className='flex items-start gap-2 rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2.5 text-sm text-destructive'>
+							<AlertCircle className='mt-0.5 h-4 w-4 shrink-0' />
+							{error}
+						</div>
+					)}
 
-					<Input
-						placeholder='Username'
-						onChange={(e) => setForm({ ...form, username: e.target.value })}
-					/>
+					<form
+						onSubmit={handleRegister}
+						className='space-y-4'>
+						<Input
+							name='companyName'
+							placeholder='Company Name'
+							value={form.companyName}
+							onChange={handleChange}
+						/>
 
-					<Input
-						placeholder='Email'
-						type='email'
-						onChange={(e) => setForm({ ...form, email: e.target.value })}
-					/>
+						<Input
+							name='username'
+							placeholder='Username'
+							value={form.username}
+							onChange={handleChange}
+						/>
 
-					<Input
-						placeholder='Phone Number'
-						onChange={(e) => setForm({ ...form, phoneNumber: e.target.value })}
-					/>
+						<Input
+							name='email'
+							placeholder='Email'
+							type='email'
+							value={form.email}
+							onChange={handleChange}
+						/>
 
-					<Input
-						type='password'
-						placeholder='Password'
-						onChange={(e) => setForm({ ...form, password: e.target.value })}
-					/>
+						<Input
+							name='phoneNumber'
+							placeholder='Phone Number'
+							value={form.phoneNumber}
+							onChange={handleChange}
+						/>
 
-					<Button
-						onClick={handleRegister}
-						disabled={loading}
-						className='w-full'>
-						{loading ? 'Creating...' : 'Register Company'}
-					</Button>
+						<Input
+							name='password'
+							type='password'
+							placeholder='Password'
+							value={form.password}
+							onChange={handleChange}
+						/>
 
-					<p
-						className='text-sm cursor-pointer text-center'
-						onClick={() => router.push('/login')}>
-						Already have an account?
+						<Button
+							type='submit'
+							disabled={loading}
+							className='w-full'>
+							{loading && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+							{loading ? 'Creating...' : 'Register Company'}
+						</Button>
+					</form>
+
+					<p className='text-sm text-center text-muted-foreground'>
+						Already have an account?{' '}
+						<Link
+							href='/login'
+							className='text-primary hover:underline font-medium'>
+							Sign in
+						</Link>
 					</p>
 				</CardContent>
 			</Card>

@@ -11,6 +11,7 @@ import {
 	Settings,
 	LogOut,
 	X,
+	Book,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -21,9 +22,7 @@ interface SidebarProps {
 
 const NAV_ITEMS = [
 	{ href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-	{ href: '/companies', label: 'Companies', icon: Building2 },
-	{ href: '/users', label: 'Users', icon: Users },
-	{ href: '/settings', label: 'Settings', icon: Settings },
+	{ href: '/billing', label: 'Billing', icon: Book },
 ] as const;
 
 export default function Sidebar({ className = '', onClose }: SidebarProps) {

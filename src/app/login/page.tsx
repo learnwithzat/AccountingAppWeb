@@ -3,6 +3,7 @@
 
 import { KeyboardEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import API from '@/lib/api';
 import { saveToken } from '@/lib/auth';
 import { Loader2, AlertCircle } from 'lucide-react';
@@ -137,11 +138,11 @@ export default function LoginPage() {
 				{/* Register link */}
 				<p className='mt-5 text-center text-sm text-muted-foreground'>
 					Don't have an account?{' '}
-					<span
-						onClick={() => router.push('/register')}
-						className='cursor-pointer font-medium text-primary hover:underline'>
+					<Link
+						href='/register'
+						className='font-medium text-primary hover:underline'>
 						Create one
-					</span>
+					</Link>
 				</p>
 			</div>
 		</div>

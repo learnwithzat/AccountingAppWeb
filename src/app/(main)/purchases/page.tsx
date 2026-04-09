@@ -2,9 +2,38 @@
 
 'use client';
 
-import { ShoppingBag, Plus } from 'lucide-react';
+import {
+	ShoppingBag,
+	Plus,
+	CreditCard,
+	ArrowDownCircle,
+	Search,
+	Wallet,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+
+const PURCHASE_SUMMARY = [
+	{
+		label: 'Total Expenses',
+		value: '$18,240.50',
+		icon: CreditCard,
+		color: 'text-red-600',
+	},
+	{
+		label: 'Unpaid Bills',
+		value: '$4,120.00',
+		icon: Wallet,
+		color: 'text-amber-600',
+	},
+	{
+		label: 'Recent Orders',
+		value: '8',
+		icon: ArrowDownCircle,
+		color: 'text-blue-600',
+	},
+];
 
 export default function PurchasesPage() {
 	return (

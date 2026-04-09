@@ -2,9 +2,34 @@
 
 'use client';
 
-import { FileText, Download } from 'lucide-react';
+import {
+	FileText,
+	Download,
+	BarChart3,
+	PieChart,
+	Landmark,
+	ArrowRight,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+
+const REPORT_CATEGORIES = [
+	{
+		title: 'Profit & Loss',
+		description: 'Summary of your revenue, costs, and expenses.',
+		icon: BarChart3,
+	},
+	{
+		title: 'Balance Sheet',
+		description: 'Detailed view of assets, liabilities, and equity.',
+		icon: Landmark,
+	},
+	{
+		title: 'Tax Summary',
+		description: 'Prepare your business for tax season with ease.',
+		icon: PieChart,
+	},
+];
 
 export default function ReportsPage() {
 	return (
@@ -27,15 +52,21 @@ export default function ReportsPage() {
 			</div>
 
 			<div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
-				{['Profit & Loss', 'Balance Sheet', 'Tax Summary'].map((report) => (
+				{REPORT_CATEGORIES.map((report) => (
 					<Card
-						key={report}
-						className='cursor-pointer hover:bg-muted/50 transition-colors'>
-						<CardContent className='flex items-center gap-4 p-6'>
-							<div className='rounded-md bg-primary/10 p-2'>
-								<FileText className='h-6 w-6 text-primary' />
+						key={report.title}
+						className='group cursor-pointer hover:border-primary/50 hover:shadow-md transition-all'>
+						<CardContent className='flex flex-col gap-4 p-6'>
+							<div className='flex items-center justify-between'>
+								<div className='rounded-lg bg-primary/10 p-3'>
+									<report.icon className='h-6 w-6 text-primary' />
+								</div>
+								<ArrowRight className='h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity' />
 							</div>
-							<span className='font-medium'>{report}</span>
+							<h3 className='font-bold text-lg'>{report.title}</h3>
+							<p className='text-sm text-muted-foreground leading-relaxed'>
+								{report.description}
+							</p>
 						</CardContent>
 					</Card>
 				))}

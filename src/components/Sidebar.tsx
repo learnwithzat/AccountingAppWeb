@@ -22,6 +22,11 @@ interface SidebarProps {
 
 const NAV_ITEMS = [
 	{ href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+	{ href: '/purchases', label: 'Purchases', icon: Building2 },
+	{ href: '/sales', label: 'Sales', icon: Users },
+	{ href: '/customers', label: 'Customers', icon: Settings },
+	{ href: '/reports', label: 'Reports', icon: Book },
+	{ href: '/settings', label: 'Products', icon: Book },
 	{ href: '/billing', label: 'Billing', icon: Book },
 ] as const;
 

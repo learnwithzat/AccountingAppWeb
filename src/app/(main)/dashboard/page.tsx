@@ -5,8 +5,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import API from '@/lib/api';
-import { getToken, logout } from '@/lib/auth';
-import { jwtDecode } from 'jwt-decode';
+import { useAuth } from '@/context/AuthContext';
+import { logout } from '@/lib/auth';
 
 import {
 	ResponsiveContainer,
@@ -18,18 +18,11 @@ import {
 	YAxis,
 	Tooltip,
 	CartesianGrid,
-	Legend,
 } from 'recharts';
 
 import { TrendingUp, Package, Users, Repeat, DollarSign } from 'lucide-react';
 
-/* ───────────────────────────── */
-
-type TokenPayload = {
-	username: string;
-	companyId: string;
-	companyName: string;
-};
+/* ───────── TYPES ───────── */
 
 type Summary = {
 	sales: number;
@@ -39,64 +32,63 @@ type Summary = {
 	profit: number;
 };
 
+/* ───────── COMPONENT ───────── */
+
 export default function DashboardPage() {
 	const router = useRouter();
+	const { companyId, companyName, loading } = useAuth();
 
-	const [user, setUser] = useState<TokenPayload | null>(null);
 	const [summary, setSummary] = useState<Summary | null>(null);
 	const [salesChart, setSalesChart] = useState<any[]>([]);
 	const [purchaseChart, setPurchaseChart] = useState<any[]>([]);
-	const [loading, setLoading] = useState(true);
+	const [pageLoading, setPageLoading] = useState(true);
 
-	/* ───── AUTH ───── */
+	/* ───── LOAD DATA ───── */
 	useEffect(() => {
-		const token = getToken();
+		if (loading) return;
 
-		if (!token) {
+		if (!companyId) {
 			router.push('/login');
 			return;
 		}
 
-		try {
-			const decoded = jwtDecode<TokenPayload>(token);
-			setUser(decoded);
-			loadDashboard(decoded.companyId);
-		} catch {
-			logout();
-		}
-	}, [router]);
+		const loadDashboard = async () => {
+			try {
+				setPageLoading(true);
 
-	/* ───── LOAD ALL DATA ───── */
-	const loadDashboard = async (companyId: string) => {
-		try {
-			setLoading(true);
+				const [summaryRes, salesRes, purchaseRes] = await Promise.all([
+					API.get(`/dashboard/summary?companyId=${companyId}`),
+					API.get(`/dashboard/sales-chart?companyId=${companyId}`),
+					API.get(`/dashboard/purchase-chart?companyId=${companyId}`),
+				]);
 
-			const [summaryRes, salesRes, purchaseRes] = await Promise.all([
-				API.get(`/dashboard/summary?companyId=${companyId}`),
-				API.get(`/dashboard/sales-chart?companyId=${companyId}`),
-				API.get(`/dashboard/purchase-chart?companyId=${companyId}`),
-			]);
+				setSummary(summaryRes.data);
+				setSalesChart(salesRes.data);
+				setPurchaseChart(purchaseRes.data);
+			} catch (err) {
+				console.error('Dashboard load error:', err);
+			} finally {
+				setPageLoading(false);
+			}
+		};
 
-			setSummary(summaryRes.data);
-			setSalesChart(salesRes.data);
-			setPurchaseChart(purchaseRes.data);
-		} finally {
-			setLoading(false);
-		}
-	};
+		loadDashboard();
+	}, [companyId, loading]);
 
-	if (loading) {
+	/* ───── LOADING ───── */
+	if (loading || pageLoading) {
 		return (
 			<div className='p-10 text-muted-foreground'>Loading dashboard...</div>
 		);
 	}
 
+	/* ───── UI ───── */
 	return (
 		<div className='p-6 space-y-6 max-w-7xl'>
 			{/* HEADER */}
 			<div>
 				<h1 className='text-2xl font-semibold'>Live ERP Dashboard</h1>
-				<p className='text-sm text-muted-foreground'>{user?.companyName}</p>
+				<p className='text-sm text-muted-foreground'>{companyName}</p>
 			</div>
 
 			{/* KPI CARDS */}

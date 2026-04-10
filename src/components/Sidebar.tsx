@@ -100,9 +100,9 @@ const NAV_ITEMS: NavItem[] = [
 		href: '/settings',
 	},
 	{
-		label: 'Billing',
+		label: 'Subscription',
 		icon: Book,
-		href: '/billing',
+		href: '/subscription',
 	},
 ];
 

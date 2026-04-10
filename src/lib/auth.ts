@@ -13,3 +13,18 @@ export const logout = () => {
 	localStorage.removeItem('token');
 	window.location.href = '/login';
 };
+
+/* ✅ ADD THIS */
+export const getUserFromToken = () => {
+	const token = getToken();
+	if (!token) return null;
+
+	try {
+		const payload = token.split('.')[1];
+		const decoded = JSON.parse(atob(payload));
+		return decoded;
+	} catch (e) {
+		console.error('Invalid token', e);
+		return null;
+	}
+};

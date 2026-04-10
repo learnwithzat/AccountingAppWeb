@@ -2,167 +2,252 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useAuth } from '@/context/AuthContext';
 import API from '@/lib/api';
 
-type Invoice = {
-	invoiceNo: string;
-	customer: string;
-	subtotal: number;
-	gstRate: number;
-	gstAmount: number;
-	total: number;
-	date: string;
+/* ───────── TYPES ───────── */
+
+type LineItem = {
+	id: string;
+	description: string;
+	hsn: string;
+	qty: number;
+	unitPrice: number;
+	discountPct: number;
 };
 
-export default function SalesInvoicesPage() {
-	const [customer, setCustomer] = useState('');
-	const [amount, setAmount] = useState('');
-	const [gstRate, setGstRate] = useState(18);
+type CompanySettings = {
+	id: string;
+	companyName: string;
+	country: string;
+	taxSystem: string;
+	defaultTaxRate: number;
+	currency: string;
+	invoicePrefix: string;
+};
 
-	const [invoiceNo, setInvoiceNo] = useState('');
-	const [data, setData] = useState<Invoice[]>([]);
-	const [loading, setLoading] = useState(false);
+type InvoiceState = {
+	invoiceNumber: string;
+	invoiceDate: string;
+	dueDate: string;
+	paymentTerms: string;
+	billToCompany: string;
+	billToContact: string;
+	billToGst: string;
+	notes: string;
+	terms: string;
+	items: LineItem[];
+	taxRate: number;
+	additionalDiscount: number;
+};
 
-	/* ─────────────────────────────
-     GET NEXT INVOICE NUMBER
-  ───────────────────────────── */
-	const fetchInvoiceNo = async () => {
-		try {
-			const companyId = '1'; // replace with auth companyId
+/* ───────── HELPERS ───────── */
 
-			const res = await API.get(`/invoice/next-number?companyId=${companyId}`);
+const uid = () => Math.random().toString(36).slice(2, 9);
 
-			setInvoiceNo(res.data.invoiceNo);
-		} catch (err) {
-			console.error('Invoice number error', err);
-		}
+const isoDate = (d = 0) => {
+	const dt = new Date();
+	dt.setDate(dt.getDate() + d);
+	return dt.toISOString().split('T')[0];
+};
+
+const emptyItem = (): LineItem => ({
+	id: uid(),
+	description: '',
+	hsn: '',
+	qty: 1,
+	unitPrice: 0,
+	discountPct: 0,
+});
+
+const calcTotals = (items: LineItem[], discount: number) => {
+	const subtotal = items.reduce((s, i) => s + i.qty * i.unitPrice, 0);
+	const itemDiscounts = items.reduce(
+		(s, i) => s + i.qty * i.unitPrice * (i.discountPct / 100),
+		0
+	);
+	const afterItemDisc = subtotal - itemDiscounts;
+
+	return {
+		subtotal,
+		itemDiscounts,
+		afterItemDisc,
+		grand: afterItemDisc - discount,
 	};
+};
 
+const makeFmt = (currency: string) => {
+	try {
+		return new Intl.NumberFormat(undefined, {
+			style: 'currency',
+			currency,
+		}).format;
+	} catch {
+		return (n: number) => n.toFixed(2);
+	}
+};
+
+/* ───────── COMPONENT ───────── */
+
+export default function SalesInvoiceBuilder() {
+	const { companyId, loading: authLoading } = useAuth();
+
+	const [settings, setSettings] = useState<CompanySettings | null>(null);
+	const [error, setError] = useState<string | null>(null);
+
+	const [state, setState] = useState<InvoiceState>({
+		invoiceNumber: '',
+		invoiceDate: isoDate(),
+		dueDate: isoDate(30),
+		paymentTerms: 'Net 30',
+		billToCompany: '',
+		billToContact: '',
+		billToGst: '',
+		notes: '',
+		terms: '',
+		items: [emptyItem()],
+		taxRate: 0,
+		additionalDiscount: 0,
+	});
+
+	const [taxData, setTaxData] = useState<any>(null);
+	const [preview, setPreview] = useState<any>(null);
+	const [saving, setSaving] = useState(false);
+
+	/* ───────── LOAD COMPANY DATA ───────── */
 	useEffect(() => {
-		fetchInvoiceNo();
-	}, []);
+		if (authLoading) return;
+		if (!companyId) return;
 
-	/* ─────────────────────────────
-     CREATE INVOICE (via API preview)
-  ───────────────────────────── */
-	const createInvoice = async () => {
-		if (!customer || !amount) return;
+		(async () => {
+			try {
+				const s = (await API.get(`/company/${companyId}`)).data;
+
+				const num = (
+					await API.get(`/invoice/next-number?companyId=${companyId}`)
+				).data;
+
+				setSettings(s);
+
+				setState((prev) => ({
+					...prev,
+					invoiceNumber: num.invoiceNumber,
+					taxRate: s.defaultTaxRate,
+				}));
+			} catch (err) {
+				console.error(err);
+				setError('Failed to load company data');
+			}
+		})();
+	}, [companyId, authLoading]);
+
+	/* ───────── TOTALS ───────── */
+	const totals = useMemo(
+		() => calcTotals(state.items, state.additionalDiscount),
+		[state.items, state.additionalDiscount]
+	);
+
+	const fmt = useMemo(() => makeFmt(settings?.currency || 'USD'), [settings]);
+
+	/* ───────── TAX API ───────── */
+	useEffect(() => {
+		if (!companyId || !settings) return;
+
+		const t = setTimeout(async () => {
+			try {
+				const res = await API.post('/invoice/calculate-tax', {
+					companyId,
+					customer: state.billToCompany,
+					amount: totals.afterItemDisc,
+					country: settings.country,
+				});
+
+				setTaxData(res.data);
+			} catch (err) {
+				console.error(err);
+			}
+		}, 400);
+
+		return () => clearTimeout(t);
+	}, [companyId, settings, state.billToCompany, totals.afterItemDisc]);
+
+	/* ───────── SAVE ───────── */
+	const handleSave = async () => {
+		if (!companyId) return;
 
 		try {
-			setLoading(true);
+			setSaving(true);
 
-			const companyId = '1';
-
-			const res = await API.post('/invoice/preview', {
+			await API.post('/invoice', {
+				...state,
 				companyId,
-				customer,
-				amount: Number(amount),
-				gstRate,
+				taxAmount: taxData?.taxAmount,
+				total: totals.grand + (taxData?.taxAmount || 0),
 			});
 
-			setData([...data, res.data]);
-
-			// refresh invoice number for next entry
-			await fetchInvoiceNo();
-
-			setCustomer('');
-			setAmount('');
-		} catch (err) {
-			console.error('Create invoice error', err);
+			alert('Saved');
+		} catch {
+			alert('Error saving');
 		} finally {
-			setLoading(false);
+			setSaving(false);
 		}
 	};
 
+	/* ───────── UI STATES ───────── */
+
+	if (authLoading) return <div className='p-6'>Loading session...</div>;
+
+	if (!companyId) {
+		return <div className='p-6 text-red-500'>Login required (no company)</div>;
+	}
+
+	if (error) return <div className='p-6 text-red-500'>{error}</div>;
+
+	if (!settings) {
+		return <div className='p-6'>Loading company data...</div>;
+	}
+
+	/* ───────── UI ───────── */
+
 	return (
-		<div className='p-6 space-y-6'>
-			{/* HEADER */}
-			<h1 className='text-xl font-semibold'>Sales Invoices (API Powered)</h1>
+		<div className='p-6 max-w-5xl mx-auto space-y-4'>
+			<h1 className='text-xl font-semibold'>Invoice #{state.invoiceNumber}</h1>
 
-			{/* INVOICE NO DISPLAY */}
-			<div className='text-sm text-muted-foreground'>
-				Current Invoice No:
-				<span className='ml-2 font-semibold text-black'>
-					{invoiceNo || 'Loading...'}
-				</span>
-			</div>
+			<input
+				className='border p-2 w-full'
+				placeholder='Customer'
+				value={state.billToCompany}
+				onChange={(e) =>
+					setState((s) => ({ ...s, billToCompany: e.target.value }))
+				}
+			/>
 
-			{/* FORM */}
-			<div className='grid grid-cols-1 md:grid-cols-4 gap-3'>
-				<input
-					className='border p-2 rounded'
-					placeholder='Customer'
-					value={customer}
-					onChange={(e) => setCustomer(e.target.value)}
-				/>
+			{state.items.map((item) => (
+				<div
+					key={item.id}
+					className='flex gap-2'>
+					<input
+						placeholder='Desc'
+						value={item.description}
+						onChange={(e) =>
+							setState((s) => ({
+								...s,
+								items: s.items.map((i) =>
+									i.id === item.id ? { ...i, description: e.target.value } : i
+								),
+							}))
+						}
+					/>
+				</div>
+			))}
 
-				<input
-					className='border p-2 rounded'
-					placeholder='Amount'
-					type='number'
-					value={amount}
-					onChange={(e) => setAmount(e.target.value)}
-				/>
-
-				<select
-					className='border p-2 rounded'
-					value={gstRate}
-					onChange={(e) => setGstRate(Number(e.target.value))}>
-					<option value={0}>0%</option>
-					<option value={5}>5%</option>
-					<option value={12}>12%</option>
-					<option value={18}>18%</option>
-				</select>
-
-				<button
-					onClick={createInvoice}
-					disabled={loading}
-					className='bg-green-600 text-white rounded p-2'>
-					{loading ? 'Creating...' : 'Create Invoice'}
-				</button>
-			</div>
-
-			{/* TABLE */}
-			<div className='border rounded-lg overflow-hidden'>
-				<table className='w-full'>
-					<thead className='bg-gray-100'>
-						<tr>
-							<th className='border p-2'>Invoice</th>
-							<th className='border p-2'>Customer</th>
-							<th className='border p-2'>Subtotal</th>
-							<th className='border p-2'>GST</th>
-							<th className='border p-2'>Total</th>
-							<th className='border p-2'>Date</th>
-						</tr>
-					</thead>
-
-					<tbody>
-						{data.map((inv, idx) => (
-							<tr key={idx}>
-								<td className='border p-2'>{inv.invoiceNo}</td>
-								<td className='border p-2'>{inv.customer}</td>
-								<td className='border p-2'>{inv.subtotal}</td>
-								<td className='border p-2'>
-									{inv.gstAmount} ({inv.gstRate}%)
-								</td>
-								<td className='border p-2 font-semibold'>{inv.total}</td>
-								<td className='border p-2'>{inv.date}</td>
-							</tr>
-						))}
-
-						{data.length === 0 && (
-							<tr>
-								<td
-									colSpan={6}
-									className='text-center p-4 text-gray-500'>
-									No invoices created yet
-								</td>
-							</tr>
-						)}
-					</tbody>
-				</table>
-			</div>
+			<button
+				onClick={handleSave}
+				disabled={saving}
+				className='bg-blue-600 text-white px-4 py-2'>
+				{saving ? 'Saving...' : 'Save'}
+			</button>
 		</div>
 	);
 }

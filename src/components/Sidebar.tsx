@@ -90,7 +90,7 @@ const NAV_ITEMS: NavItem[] = [
 		icon: Book,
 		children: [
 			{ href: '/reports/sales', label: 'Sales Report' },
-			{ href: '/reports/purchase', label: 'Purchase Report' },
+			{ href: '/reports/purchases', label: 'Purchase Report' },
 		],
 	},
 

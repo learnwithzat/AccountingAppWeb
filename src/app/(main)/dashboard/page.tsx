@@ -2,11 +2,8 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import API from '@/lib/api';
-import { useAuth } from '@/context/AuthContext';
-import { logout } from '@/lib/auth';
 
 import {
 	ResponsiveContainer,
@@ -21,62 +18,36 @@ import {
 } from 'recharts';
 
 import { TrendingUp, Package, Users, Repeat, DollarSign } from 'lucide-react';
-
-/* ───────── TYPES ───────── */
-
-type Summary = {
-	sales: number;
-	purchases: number;
-	customers: number;
-	transactions: number;
-	profit: number;
-};
+import { useAuthStore } from '@/store/authStore';
+import { useDashboardStore } from '@/store/useDashboardStore';
 
 /* ───────── COMPONENT ───────── */
 
 export default function DashboardPage() {
 	const router = useRouter();
-	const { companyId, companyName, loading } = useAuth();
-
-	const [summary, setSummary] = useState<Summary | null>(null);
-	const [salesChart, setSalesChart] = useState<any[]>([]);
-	const [purchaseChart, setPurchaseChart] = useState<any[]>([]);
-	const [pageLoading, setPageLoading] = useState(true);
+	const { user, loading: authLoading, logout } = useAuthStore();
+	const {
+		summary,
+		salesChart,
+		purchaseChart,
+		loading: dataLoading,
+		fetchDashboardData,
+	} = useDashboardStore();
 
 	/* ───── LOAD DATA ───── */
 	useEffect(() => {
-		if (loading) return;
+		if (authLoading) return;
 
-		if (!companyId) {
+		if (!user?.companyId) {
 			router.push('/login');
 			return;
 		}
 
-		const loadDashboard = async () => {
-			try {
-				setPageLoading(true);
-
-				const [summaryRes, salesRes, purchaseRes] = await Promise.all([
-					API.get(`/dashboard/summary?companyId=${companyId}`),
-					API.get(`/dashboard/sales-chart?companyId=${companyId}`),
-					API.get(`/dashboard/purchase-chart?companyId=${companyId}`),
-				]);
-
-				setSummary(summaryRes.data);
-				setSalesChart(salesRes.data);
-				setPurchaseChart(purchaseRes.data);
-			} catch (err) {
-				console.error('Dashboard load error:', err);
-			} finally {
-				setPageLoading(false);
-			}
-		};
-
-		loadDashboard();
-	}, [companyId, loading]);
+		fetchDashboardData(user.companyId);
+	}, [user?.companyId, authLoading, fetchDashboardData, router]);
 
 	/* ───── LOADING ───── */
-	if (loading || pageLoading) {
+	if (authLoading || dataLoading) {
 		return (
 			<div className='p-10 text-muted-foreground'>Loading dashboard...</div>
 		);
@@ -88,7 +59,7 @@ export default function DashboardPage() {
 			{/* HEADER */}
 			<div>
 				<h1 className='text-2xl font-semibold'>Live ERP Dashboard</h1>
-				<p className='text-sm text-muted-foreground'>{companyName}</p>
+				<p className='text-sm text-muted-foreground'>{user?.companyName}</p>
 			</div>
 
 			{/* KPI CARDS */}

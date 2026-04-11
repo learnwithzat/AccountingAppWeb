@@ -5,8 +5,12 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
-import { BillStatus, BillType, Bill, useBillStore } from '@/store/useBillStore';
-import BillCard from './BillCard';
+import {
+	usePurchaseOrderStore,
+	PurchaseOrder,
+	PurchaseOrderStatus,
+} from '@/store/usePurchaseOrderStore';
+import PurchaseOrderCard from './PurchaseOrderCard';
 
 /* ─────────────────────────────────────────
    HELPERS & UTILITIES
@@ -32,28 +36,30 @@ export const formatDate = (dateString: string) => {
 	});
 };
 
-const getStatusColor = (status: BillStatus): string => {
+const getStatusColor = (status: PurchaseOrderStatus): string => {
 	const colors = {
 		draft: 'bg-gray-600 text-white',
 		pending: 'bg-yellow-500 text-black',
 		approved: 'bg-blue-500 text-white',
-		paid: 'bg-green-500 text-white',
-		overdue: 'bg-red-500 text-white',
-		cancelled: 'bg-red-600 text-white',
+		ordered: 'bg-purple-500 text-white',
+		received: 'bg-indigo-500 text-white',
 		partial: 'bg-orange-500 text-black',
+		completed: 'bg-green-500 text-white',
+		cancelled: 'bg-red-500 text-white',
 	};
 	return colors[status] || colors.draft;
 };
 
-export const getStatusBadge = (status: BillStatus) => {
+export const getStatusBadge = (status: PurchaseOrderStatus) => {
 	const labels = {
 		draft: 'Draft',
-		pending: 'Pending',
+		pending: 'Pending Approval',
 		approved: 'Approved',
-		paid: 'Paid',
-		overdue: 'Overdue',
-		cancelled: 'Cancelled',
+		ordered: 'Ordered',
+		received: 'Partially Received',
 		partial: 'Partial',
+		completed: 'Completed',
+		cancelled: 'Cancelled',
 	};
 	return (
 		<span
@@ -65,39 +71,25 @@ export const getStatusBadge = (status: BillStatus) => {
 	);
 };
 
-export const getBillTypeLabel = (type: BillType): string => {
-	const labels = {
-		purchase: 'Purchase Bill',
-		expense: 'Expense',
-		subscription: 'Subscription',
-		utility: 'Utility',
-		rent: 'Rent',
-		other: 'Other',
-	};
-	return labels[type] || type;
-};
-
 /**
- * Calculates derived bill data used in multiple places (stats, table, cards)
+ * Calculates derived order data used in stats and row rendering
  */
-export const getBillMetadata = (bill: Bill) => {
+export const getOrderMetadata = (order: PurchaseOrder) => {
 	const isOverdue =
-		new Date(bill.dueDate) < new Date() &&
-		bill.status !== 'paid' &&
-		bill.status !== 'cancelled';
-	const dueAmount = bill.totalAmount - bill.paidAmount;
-	const effectiveStatus = isOverdue ? 'overdue' : bill.status;
-	return { isOverdue, dueAmount, effectiveStatus };
+		new Date(order.expectedDeliveryDate) < new Date() &&
+		order.status !== 'completed' &&
+		order.status !== 'cancelled';
+	const isOpen = ['approved', 'ordered', 'received'].includes(order.status);
+	return { isOverdue, isOpen };
 };
 
 /* ─────────────────────────────────────────
    FILTERS COMPONENT
 ───────────────────────────────────────── */
 
-interface BillFilters {
+interface PurchaseOrderFilters {
 	search: string;
-	status: BillStatus | 'all';
-	type: BillType | 'all';
+	status: PurchaseOrderStatus | 'all';
 	dateFrom: string;
 	dateTo: string;
 	minAmount: string;
@@ -105,10 +97,9 @@ interface BillFilters {
 	vendorId: string;
 }
 
-const initialFilters: BillFilters = {
+const initialFilters: PurchaseOrderFilters = {
 	search: '',
 	status: 'all',
-	type: 'all',
 	dateFrom: '',
 	dateTo: '',
 	minAmount: '',
@@ -116,20 +107,20 @@ const initialFilters: BillFilters = {
 	vendorId: '',
 };
 
-function BillFiltersComponent({
+function PurchaseOrderFiltersComponent({
 	filters,
 	onFilterChange,
 	onReset,
 	vendors,
 }: {
-	filters: BillFilters;
-	onFilterChange: (filters: BillFilters) => void;
+	filters: PurchaseOrderFilters;
+	onFilterChange: (filters: PurchaseOrderFilters) => void;
 	onReset: () => void;
 	vendors: { id: string; name: string }[];
 }) {
 	const [isExpanded, setIsExpanded] = useState(false);
 
-	const handleChange = (key: keyof BillFilters, value: string) => {
+	const handleChange = (key: keyof PurchaseOrderFilters, value: string) => {
 		onFilterChange({ ...filters, [key]: value });
 	};
 
@@ -156,7 +147,7 @@ function BillFiltersComponent({
 					<label className='block text-sm text-gray-400 mb-1'>Search</label>
 					<input
 						type='text'
-						placeholder='Bill #, vendor...'
+						placeholder='PO #, vendor...'
 						value={filters.search}
 						onChange={(e) => handleChange('search', e.target.value)}
 						className='w-full p-2 bg-gray-700 rounded text-white'
@@ -168,35 +159,21 @@ function BillFiltersComponent({
 					<select
 						value={filters.status}
 						onChange={(e) =>
-							handleChange('status', e.target.value as BillStatus | 'all')
+							handleChange(
+								'status',
+								e.target.value as PurchaseOrderStatus | 'all'
+							)
 						}
 						className='w-full p-2 bg-gray-700 rounded text-white'>
 						<option value='all'>All Status</option>
 						<option value='draft'>Draft</option>
-						<option value='pending'>Pending</option>
+						<option value='pending'>Pending Approval</option>
 						<option value='approved'>Approved</option>
-						<option value='paid'>Paid</option>
-						<option value='overdue'>Overdue</option>
+						<option value='ordered'>Ordered</option>
+						<option value='received'>Partially Received</option>
 						<option value='partial'>Partial</option>
+						<option value='completed'>Completed</option>
 						<option value='cancelled'>Cancelled</option>
-					</select>
-				</div>
-
-				<div>
-					<label className='block text-sm text-gray-400 mb-1'>Bill Type</label>
-					<select
-						value={filters.type}
-						onChange={(e) =>
-							handleChange('type', e.target.value as BillType | 'all')
-						}
-						className='w-full p-2 bg-gray-700 rounded text-white'>
-						<option value='all'>All Types</option>
-						<option value='purchase'>Purchase Bill</option>
-						<option value='expense'>Expense</option>
-						<option value='subscription'>Subscription</option>
-						<option value='utility'>Utility</option>
-						<option value='rent'>Rent</option>
-						<option value='other'>Other</option>
 					</select>
 				</div>
 
@@ -276,46 +253,46 @@ function BillFiltersComponent({
 }
 
 /* ─────────────────────────────────────────
-   MAIN BILLS PAGE
+   MAIN PURCHASE ORDERS PAGE
 ───────────────────────────────────────── */
 
-export default function PurchaseBillsPage() {
+export default function PurchaseOrdersPage() {
 	const { user, loading: authLoading } = useAuthStore();
 	const companyId = user?.companyId;
 	const router = useRouter();
 
 	const {
-		bills,
+		orders,
 		loading,
 		error,
-		fetchBills,
-		updateBillStatus,
-		deleteBill,
-		recordPayment,
-	} = useBillStore();
+		fetchPurchaseOrders,
+		updateOrderStatus,
+		deletePurchaseOrder,
+		receiveOrder,
+	} = usePurchaseOrderStore();
 
-	const [filters, setFilters] = useState<BillFilters>(initialFilters);
-	const [selectedBills, setSelectedBills] = useState<Set<string>>(new Set());
+	const [filters, setFilters] = useState<PurchaseOrderFilters>(initialFilters);
+	const [selectedOrders, setSelectedOrders] = useState<Set<string>>(new Set());
 	const [showBulkActions, setShowBulkActions] = useState(false);
 	const [toast, setToast] = useState({
 		show: false,
 		message: '',
 		type: 'success',
 	});
-	const [showPaymentModal, setShowPaymentModal] = useState(false);
-	const [selectedBillForPayment, setSelectedBillForPayment] =
-		useState<Bill | null>(null);
-	const [paymentAmount, setPaymentAmount] = useState('');
-	const [paymentDate, setPaymentDate] = useState(
-		new Date().toISOString().split('T')[0]
+	const [showReceiveModal, setShowReceiveModal] = useState(false);
+	const [selectedOrderForReceive, setSelectedOrderForReceive] =
+		useState<PurchaseOrder | null>(null);
+	const [receiveItems, setReceiveItems] = useState<{ [key: string]: number }>(
+		{}
 	);
-	const [paymentMethod, setPaymentMethod] = useState('bank_transfer');
 
 	// Mock vendors - in real app, fetch from vendor store
 	const vendors = [
 		{ id: '1', name: 'ABC Supplies' },
 		{ id: '2', name: 'XYZ Logistics' },
 		{ id: '3', name: 'Tech Distributors' },
+		{ id: '4', name: 'Office Depot' },
+		{ id: '5', name: 'Raw Materials Inc.' },
 	];
 
 	/* ─────────────────────────────────────────
@@ -324,125 +301,112 @@ export default function PurchaseBillsPage() {
 
 	useEffect(() => {
 		if (companyId) {
-			fetchBills(companyId);
+			fetchPurchaseOrders(companyId);
 		}
-	}, [companyId, fetchBills]);
+	}, [companyId, fetchPurchaseOrders]);
 
 	/* ─────────────────────────────────────────
 	   FILTERING LOGIC
 	───────────────────────────────────────── */
 
-	const filteredBills = useMemo(() => {
-		let result = [...bills];
+	const filteredOrders = useMemo(() => {
+		let result = [...orders];
 
 		// Search filter
 		if (filters.search) {
 			const searchLower = filters.search.toLowerCase();
 			result = result.filter(
-				(bill) =>
-					bill.billNumber?.toLowerCase().includes(searchLower) ||
-					bill.vendorName.toLowerCase().includes(searchLower) ||
-					bill.invoiceNumber?.toLowerCase().includes(searchLower)
+				(order) =>
+					order.poNumber?.toLowerCase().includes(searchLower) ||
+					order.vendorName.toLowerCase().includes(searchLower) ||
+					order.referenceNumber?.toLowerCase().includes(searchLower)
 			);
 		}
 
 		// Status filter
 		if (filters.status !== 'all') {
-			result = result.filter((bill) => bill.status === filters.status);
-		}
-
-		// Type filter
-		if (filters.type !== 'all') {
-			result = result.filter((bill) => bill.type === filters.type);
+			result = result.filter((order) => order.status === filters.status);
 		}
 
 		// Vendor filter
 		if (filters.vendorId) {
-			result = result.filter((bill) => bill.vendorId === filters.vendorId);
+			result = result.filter((order) => order.vendorId === filters.vendorId);
 		}
 
 		// Date range filter
 		if (filters.dateFrom) {
 			const fromDate = new Date(filters.dateFrom);
-			result = result.filter((bill) => new Date(bill.billDate) >= fromDate);
+			result = result.filter((order) => new Date(order.orderDate) >= fromDate);
 		}
 		if (filters.dateTo) {
 			const toDate = new Date(filters.dateTo);
 			toDate.setHours(23, 59, 59);
-			result = result.filter((bill) => new Date(bill.billDate) <= toDate);
+			result = result.filter((order) => new Date(order.orderDate) <= toDate);
 		}
 
 		// Amount range filter
 		if (filters.minAmount) {
 			const min = parseFloat(filters.minAmount);
-			result = result.filter((bill) => bill.totalAmount >= min);
+			result = result.filter((order) => order.totalAmount >= min);
 		}
 		if (filters.maxAmount) {
 			const max = parseFloat(filters.maxAmount);
-			result = result.filter((bill) => bill.totalAmount <= max);
+			result = result.filter((order) => order.totalAmount <= max);
 		}
 
 		// Sort by date (newest first)
 		result.sort(
-			(a, b) => new Date(b.billDate).getTime() - new Date(a.billDate).getTime()
+			(a, b) =>
+				new Date(b.orderDate).getTime() - new Date(a.orderDate).getTime()
 		);
 
 		return result;
-	}, [bills, filters]);
+	}, [orders, filters]);
 
 	/* ─────────────────────────────────────────
 	   STATISTICS
 	───────────────────────────────────────── */
 
 	const stats = useMemo(() => {
-		const totalBills = filteredBills.length;
-		const totalAmount = filteredBills.reduce(
-			(sum, bill) => sum + bill.totalAmount,
+		const totalOrders = filteredOrders.length;
+		const totalValue = filteredOrders.reduce(
+			(sum, order) => sum + order.totalAmount,
 			0
 		);
-		const totalPaid = filteredBills.reduce(
-			(sum, bill) => sum + bill.paidAmount,
-			0
+		const openOrders = filteredOrders.filter((o) => getOrderMetadata(o).isOpen);
+		const openValue = openOrders.reduce((sum, o) => sum + o.totalAmount, 0);
+		const completedOrders = filteredOrders.filter(
+			(o) => o.status === 'completed'
 		);
-		const totalDue = totalAmount - totalPaid;
-
-		const overdueBills = filteredBills.filter(
-			(bill) =>
-				new Date(bill.dueDate) < new Date() &&
-				bill.status !== 'paid' &&
-				bill.status !== 'cancelled'
-		);
-		const overdueAmount = overdueBills.reduce(
-			(sum, bill) => sum + (bill.totalAmount - bill.paidAmount),
+		const completedValue = completedOrders.reduce(
+			(sum, o) => sum + o.totalAmount,
 			0
 		);
 
-		const statusCounts = filteredBills.reduce(
-			(acc, bill) => {
-				const { effectiveStatus: status } = getBillMetadata(bill);
-
-				acc[status] = (acc[status] || 0) + 1;
+		const statusCounts = filteredOrders.reduce(
+			(acc, order) => {
+				acc[order.status] = (acc[order.status] || 0) + 1;
 				return acc;
 			},
 			{} as Record<string, number>
 		);
 
 		return {
-			totalBills,
-			totalAmount,
-			totalPaid,
-			totalDue,
-			overdueCount: overdueBills.length,
-			overdueAmount,
+			totalOrders,
+			totalValue,
+			openCount: openOrders.length,
+			openValue,
+			completedCount: completedOrders.length,
+			completedValue,
 			statusCounts,
 		};
-	}, [filteredBills]);
+	}, [filteredOrders]);
 
 	/* ─────────────────────────────────────────
 	   HANDLERS
 	───────────────────────────────────────── */
 
-	const handleFilterChange = (newFilters: BillFilters) => {
+	const handleFilterChange = (newFilters: PurchaseOrderFilters) => {
 		setFilters(newFilters);
 	};
 
@@ -450,121 +414,124 @@ export default function PurchaseBillsPage() {
 		setFilters(initialFilters);
 	};
 
-	const handleStatusChange = async (billId: string, newStatus: BillStatus) => {
+	const handleStatusChange = async (
+		orderId: string,
+		newStatus: PurchaseOrderStatus
+	) => {
 		if (!companyId) return;
 		try {
-			await updateBillStatus(companyId, billId, newStatus);
-			showToast(`Bill status updated to ${newStatus}`, 'success');
+			await updateOrderStatus(companyId, orderId, newStatus);
+			showToast(`Purchase order status updated to ${newStatus}`, 'success');
 		} catch (err) {
-			showToast('Failed to update bill status', 'error');
+			showToast('Failed to update order status', 'error');
 		}
 	};
 
-	const handleBulkStatusChange = async (newStatus: BillStatus) => {
+	const handleBulkStatusChange = async (newStatus: PurchaseOrderStatus) => {
 		if (!companyId) return;
-		const promises = Array.from(selectedBills).map((billId) =>
-			updateBillStatus(companyId, billId, newStatus)
+		const promises = Array.from(selectedOrders).map((orderId) =>
+			updateOrderStatus(companyId, orderId, newStatus)
 		);
 		try {
 			await Promise.all(promises);
 			showToast(
-				`Updated ${selectedBills.size} bills to ${newStatus}`,
+				`Updated ${selectedOrders.size} orders to ${newStatus}`,
 				'success'
 			);
-			setSelectedBills(new Set());
+			setSelectedOrders(new Set());
 			setShowBulkActions(false);
 		} catch (err) {
-			showToast('Failed to update some bills', 'error');
+			showToast('Failed to update some orders', 'error');
 		}
 	};
 
-	const handleDeleteBill = async (billId: string) => {
+	const handleDeleteOrder = async (orderId: string) => {
 		if (
 			!confirm(
-				'Are you sure you want to delete this bill? This action cannot be undone.'
+				'Are you sure you want to delete this purchase order? This action cannot be undone.'
 			)
 		) {
 			return;
 		}
 		if (!companyId) return;
 		try {
-			await deleteBill(companyId, billId);
-			showToast('Bill deleted successfully', 'success');
+			await deletePurchaseOrder(companyId, orderId);
+			showToast('Purchase order deleted successfully', 'success');
 		} catch (err) {
-			showToast('Failed to delete bill', 'error');
+			showToast('Failed to delete purchase order', 'error');
 		}
 	};
 
 	const handleBulkDelete = async () => {
 		if (
 			!confirm(
-				`Delete ${selectedBills.size} bills? This action cannot be undone.`
+				`Delete ${selectedOrders.size} purchase orders? This action cannot be undone.`
 			)
 		) {
 			return;
 		}
 		if (!companyId) return;
-		const promises = Array.from(selectedBills).map((billId) =>
-			deleteBill(companyId, billId)
+		const promises = Array.from(selectedOrders).map((orderId) =>
+			deletePurchaseOrder(companyId, orderId)
 		);
 		try {
 			await Promise.all(promises);
-			showToast(`Deleted ${selectedBills.size} bills`, 'success');
-			setSelectedBills(new Set());
+			showToast(`Deleted ${selectedOrders.size} purchase orders`, 'success');
+			setSelectedOrders(new Set());
 			setShowBulkActions(false);
 		} catch (err) {
-			showToast('Failed to delete some bills', 'error');
+			showToast('Failed to delete some orders', 'error');
 		}
 	};
 
-	const handlePayBill = (bill: Bill) => {
-		setSelectedBillForPayment(bill);
-		setPaymentAmount((bill.totalAmount - bill.paidAmount).toString());
-		setShowPaymentModal(true);
+	const handleReceiveOrder = (order: PurchaseOrder) => {
+		setSelectedOrderForReceive(order);
+		// Initialize receive quantities
+		const initialReceive: { [key: string]: number } = {};
+		order.items.forEach((item) => {
+			initialReceive[item.id] = item.quantity;
+		});
+		setReceiveItems(initialReceive);
+		setShowReceiveModal(true);
 	};
 
-	const handleRecordPayment = async () => {
-		if (!companyId || !selectedBillForPayment) return;
+	const handleSubmitReceive = async () => {
+		if (!companyId || !selectedOrderForReceive) return;
 
-		const amount = parseFloat(paymentAmount);
-		if (isNaN(amount) || amount <= 0) {
-			showToast('Please enter a valid amount', 'error');
-			return;
-		}
+		// Calculate received items
+		const received = Object.entries(receiveItems).map(([itemId, quantity]) => ({
+			itemId,
+			quantity,
+		}));
 
 		try {
-			await recordPayment(companyId, selectedBillForPayment.id, {
-				amount,
-				paymentDate,
-				paymentMethod,
-				reference: `Payment for ${selectedBillForPayment.billNumber}`,
-			});
-			showToast('Payment recorded successfully', 'success');
-			setShowPaymentModal(false);
-			setSelectedBillForPayment(null);
-			setPaymentAmount('');
+			await receiveOrder(companyId, selectedOrderForReceive.id, received);
+			showToast('Order received successfully', 'success');
+			setShowReceiveModal(false);
+			setSelectedOrderForReceive(null);
+			setReceiveItems({});
 		} catch (err) {
-			showToast('Failed to record payment', 'error');
+			showToast('Failed to receive order', 'error');
 		}
 	};
 
-	const toggleSelectBill = (billId: string) => {
-		const newSelected = new Set(selectedBills);
-		if (newSelected.has(billId)) {
-			newSelected.delete(billId);
+	const toggleSelectOrder = (orderId: string) => {
+		const newSelected = new Set(selectedOrders);
+		if (newSelected.has(orderId)) {
+			newSelected.delete(orderId);
 		} else {
-			newSelected.add(billId);
+			newSelected.add(orderId);
 		}
-		setSelectedBills(newSelected);
+		setSelectedOrders(newSelected);
 		setShowBulkActions(newSelected.size > 0);
 	};
 
 	const toggleSelectAll = () => {
-		if (selectedBills.size === filteredBills.length) {
-			setSelectedBills(new Set());
+		if (selectedOrders.size === filteredOrders.length) {
+			setSelectedOrders(new Set());
 			setShowBulkActions(false);
 		} else {
-			setSelectedBills(new Set(filteredBills.map((b) => b.id)));
+			setSelectedOrders(new Set(filteredOrders.map((o) => o.id)));
 			setShowBulkActions(true);
 		}
 	};
@@ -587,7 +554,7 @@ export default function PurchaseBillsPage() {
 				<div className='flex justify-center items-center h-64'>
 					<div className='text-center'>
 						<div className='animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4'></div>
-						<p>Loading bills...</p>
+						<p>Loading purchase orders...</p>
 					</div>
 				</div>
 			</div>
@@ -600,7 +567,7 @@ export default function PurchaseBillsPage() {
 				<div className='bg-red-500/10 border border-red-500 rounded-lg p-4 text-red-500'>
 					<p>Error: {error}</p>
 					<button
-						onClick={() => companyId && fetchBills(companyId)}
+						onClick={() => companyId && fetchPurchaseOrders(companyId)}
 						className='mt-2 px-4 py-2 bg-red-500 rounded hover:bg-red-600'>
 						Retry
 					</button>
@@ -618,56 +585,59 @@ export default function PurchaseBillsPage() {
 			{/* Header */}
 			<div className='flex justify-between items-center mb-6'>
 				<div>
-					<h1 className='text-2xl font-bold'>Bills & Accounts Payable</h1>
+					<h1 className='text-2xl font-bold'>Purchase Orders</h1>
 					<p className='text-gray-400 text-sm mt-1'>
-						Manage vendor bills, track payments, and monitor accounts payable
+						Manage purchase orders, track deliveries, and monitor vendor orders
 					</p>
 				</div>
 				<Link
-					href='/purchases/bills/new'
+					href='/purchases/orders/new'
 					className='bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-lg font-semibold transition-colors'>
-					+ New Bill
+					+ New Purchase Order
 				</Link>
 			</div>
 
 			{/* Stats Cards */}
 			<div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6'>
 				<div className='bg-gray-800 rounded-lg p-4'>
-					<p className='text-gray-400 text-sm'>Total Bills</p>
-					<p className='text-2xl font-bold'>{stats.totalBills}</p>
+					<p className='text-gray-400 text-sm'>Total Orders</p>
+					<p className='text-2xl font-bold'>{stats.totalOrders}</p>
 					<p className='text-xs text-gray-500 mt-1'>
-						Value: {formatCurrency(stats.totalAmount)}
+						Value: {formatCurrency(stats.totalValue)}
 					</p>
 				</div>
 				<div className='bg-gray-800 rounded-lg p-4'>
-					<p className='text-gray-400 text-sm'>Total Due</p>
+					<p className='text-gray-400 text-sm'>Open Orders</p>
 					<p className='text-2xl font-bold text-yellow-500'>
-						{formatCurrency(stats.totalDue)}
+						{stats.openCount}
 					</p>
 					<p className='text-xs text-gray-500 mt-1'>
-						Paid: {formatCurrency(stats.totalPaid)}
+						Value: {formatCurrency(stats.openValue)}
 					</p>
 				</div>
 				<div className='bg-gray-800 rounded-lg p-4'>
-					<p className='text-gray-400 text-sm'>Overdue Bills</p>
-					<p className='text-2xl font-bold text-red-500'>
-						{stats.overdueCount}
+					<p className='text-gray-400 text-sm'>Completed Orders</p>
+					<p className='text-2xl font-bold text-green-500'>
+						{stats.completedCount}
 					</p>
 					<p className='text-xs text-gray-500 mt-1'>
-						Amount: {formatCurrency(stats.overdueAmount)}
+						Value: {formatCurrency(stats.completedValue)}
 					</p>
 				</div>
 				<div className='bg-gray-800 rounded-lg p-4'>
-					<p className='text-gray-400 text-sm'>Payment Status</p>
+					<p className='text-gray-400 text-sm'>Completion Rate</p>
 					<p className='text-2xl font-bold'>
-						{((stats.totalPaid / stats.totalAmount) * 100).toFixed(1)}%
+						{stats.totalOrders > 0 ?
+							((stats.completedCount / stats.totalOrders) * 100).toFixed(1)
+						:	0}
+						%
 					</p>
-					<p className='text-xs text-gray-500 mt-1'>of total paid</p>
+					<p className='text-xs text-gray-500 mt-1'>of total orders</p>
 				</div>
 			</div>
 
 			{/* Filters */}
-			<BillFiltersComponent
+			<PurchaseOrderFiltersComponent
 				filters={filters}
 				onFilterChange={handleFilterChange}
 				onReset={resetFilters}
@@ -677,19 +647,20 @@ export default function PurchaseBillsPage() {
 			{/* Bulk Actions Bar */}
 			{showBulkActions && (
 				<div className='bg-blue-500/20 border border-blue-500 rounded-lg p-3 mb-4 flex justify-between items-center'>
-					<span>{selectedBills.size} bills selected</span>
+					<span>{selectedOrders.size} orders selected</span>
 					<div className='space-x-2'>
 						<select
 							onChange={(e) =>
-								handleBulkStatusChange(e.target.value as BillStatus)
+								handleBulkStatusChange(e.target.value as PurchaseOrderStatus)
 							}
 							className='bg-gray-700 px-3 py-1 rounded text-sm'>
 							<option value=''>Change Status</option>
 							<option value='draft'>Draft</option>
 							<option value='pending'>Pending</option>
 							<option value='approved'>Approved</option>
-							<option value='paid'>Paid</option>
-							<option value='partial'>Partial</option>
+							<option value='ordered'>Ordered</option>
+							<option value='received'>Partially Received</option>
+							<option value='completed'>Completed</option>
 							<option value='cancelled'>Cancelled</option>
 						</select>
 						<button
@@ -699,7 +670,7 @@ export default function PurchaseBillsPage() {
 						</button>
 						<button
 							onClick={() => {
-								setSelectedBills(new Set());
+								setSelectedOrders(new Set());
 								setShowBulkActions(false);
 							}}
 							className='bg-gray-600 hover:bg-gray-700 px-3 py-1 rounded text-sm'>
@@ -709,7 +680,7 @@ export default function PurchaseBillsPage() {
 				</div>
 			)}
 
-			{/* Bills Table (Desktop) */}
+			{/* Purchase Orders Table (Desktop) */}
 			<div className='hidden lg:block bg-gray-800 rounded-lg overflow-hidden'>
 				<table className='w-full'>
 					<thead className='bg-gray-700'>
@@ -718,103 +689,90 @@ export default function PurchaseBillsPage() {
 								<input
 									type='checkbox'
 									checked={
-										selectedBills.size === filteredBills.length &&
-										filteredBills.length > 0
+										selectedOrders.size === filteredOrders.length &&
+										filteredOrders.length > 0
 									}
 									onChange={toggleSelectAll}
 									className='w-4 h-4'
 								/>
 							</th>
-							<th className='px-4 py-3 text-left'>Bill #</th>
+							<th className='px-4 py-3 text-left'>PO #</th>
 							<th className='px-4 py-3 text-left'>Vendor</th>
-							<th className='px-4 py-3 text-left'>Bill Date</th>
-							<th className='px-4 py-3 text-left'>Due Date</th>
-							<th className='px-4 py-3 text-left'>Type</th>
+							<th className='px-4 py-3 text-left'>Order Date</th>
+							<th className='px-4 py-3 text-left'>Expected Date</th>
 							<th className='px-4 py-3 text-right'>Amount</th>
-							<th className='px-4 py-3 text-right'>Paid</th>
-							<th className='px-4 py-3 text-right'>Due</th>
 							<th className='px-4 py-3 text-left'>Status</th>
 							<th className='px-4 py-3 text-center'>Actions</th>
 						</tr>
 					</thead>
 					<tbody>
-						{filteredBills.length === 0 ?
+						{filteredOrders.length === 0 ?
 							<tr>
 								<td
-									colSpan={11}
+									colSpan={8}
 									className='px-4 py-8 text-center text-gray-400'>
-									No bills found. Create a new bill to get started.
+									No purchase orders found. Create a new purchase order to get
+									started.
 								</td>
 							</tr>
-						:	filteredBills.map((bill) => {
-								const { isOverdue, dueAmount, effectiveStatus } =
-									getBillMetadata(bill);
-
+						:	filteredOrders.map((order) => {
+								const { isOverdue, isOpen } = getOrderMetadata(order);
 								return (
 									<tr
-										key={bill.id}
+										key={order.id}
 										className='border-t border-gray-700 hover:bg-gray-700/50'>
 										<td className='px-4 py-3'>
 											<input
 												type='checkbox'
-												checked={selectedBills.has(bill.id)}
-												onChange={() => toggleSelectBill(bill.id)}
+												checked={selectedOrders.has(order.id)}
+												onChange={() => toggleSelectOrder(order.id)}
 												className='w-4 h-4'
 											/>
 										</td>
 										<td className='px-4 py-3'>
 											<Link
-												href={`/purchases/bills/${bill.id}`}
+												href={`/purchases/orders/${order.id}`}
 												className='text-blue-400 hover:text-blue-300 font-mono text-sm'>
-												{bill.billNumber || `BILL-${bill.id.slice(0, 8)}`}
+												{order.poNumber || `PO-${order.id.slice(0, 8)}`}
 											</Link>
 										</td>
 										<td className='px-4 py-3'>
 											<div>
-												<p className='font-medium'>{bill.vendorName}</p>
+												<p className='font-medium'>{order.vendorName}</p>
 												<p className='text-xs text-gray-400'>
-													{bill.vendorEmail}
+													{order.vendorEmail}
 												</p>
 											</div>
 										</td>
 										<td className='px-4 py-3 text-sm'>
-											{formatDate(bill.billDate)}
+											{formatDate(order.orderDate)}
 										</td>
 										<td
 											className={`px-4 py-3 text-sm ${isOverdue ? 'text-red-400 font-semibold' : ''}`}>
-											{formatDate(bill.dueDate)}
-										</td>
-										<td className='px-4 py-3 text-sm'>
-											{getBillTypeLabel(bill.type)}
+											{formatDate(order.expectedDeliveryDate)}
 										</td>
 										<td className='px-4 py-3 text-right font-semibold'>
-											{formatCurrency(bill.totalAmount, bill.currency)}
-										</td>
-										<td className='px-4 py-3 text-right text-green-400'>
-											{formatCurrency(bill.paidAmount, bill.currency)}
-										</td>
-										<td className='px-4 py-3 text-right text-yellow-400'>
-											{formatCurrency(dueAmount, bill.currency)}
+											{formatCurrency(order.totalAmount, order.currency)}
 										</td>
 										<td className='px-4 py-3'>
-											{getStatusBadge(effectiveStatus as BillStatus)}
+											{getStatusBadge(order.status)}
 										</td>
 										<td className='px-4 py-3 text-center'>
 											<div className='flex justify-center space-x-2'>
-												{bill.status !== 'cancelled' && dueAmount > 0 && (
+												{isOpen && (
 													<button
-														onClick={() => handlePayBill(bill)}
+														onClick={() => handleReceiveOrder(order)}
 														className='text-green-400 hover:text-green-300 text-sm'>
-														Pay
+														Receive
 													</button>
 												)}
 												<Link
-													href={`/purchases/bills/${bill.id}/edit`}
+													href={`/purchases/orders/${order.id}/edit`}
 													className='text-blue-400 hover:text-blue-300 text-sm'>
 													Edit
 												</Link>
 												<button
-													onClick={() => handleDeleteBill(bill.id)}
+													onClick={() => handleDeleteOrder(order.id)}
 													className='text-red-400 hover:text-red-300 text-sm'>
 													Delete
 												</button>
@@ -828,97 +786,85 @@ export default function PurchaseBillsPage() {
 				</table>
 			</div>
 
-			{/* Bills Cards (Mobile/Tablet) */}
+			{/* Purchase Orders Cards (Mobile/Tablet) */}
 			<div className='lg:hidden'>
-				{filteredBills.length === 0 ?
+				{filteredOrders.length === 0 ?
 					<div className='bg-gray-800 rounded-lg p-8 text-center text-gray-400'>
-						No bills found. Create a new bill to get started.
+						No purchase orders found. Create a new purchase order to get
+						started.
 					</div>
-				:	filteredBills.map((bill) => (
-						<BillCard
-							key={bill.id}
-							bill={bill}
+				:	filteredOrders.map((order) => (
+						<PurchaseOrderCard
+							key={order.id}
+							po={order}
 							onStatusChange={handleStatusChange}
-							onPay={handlePayBill}
+							onReceive={handleReceiveOrder}
 						/>
 					))
 				}
 			</div>
 
-			{/* Payment Modal */}
-			{showPaymentModal && selectedBillForPayment && (
-				<div className='fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4'>
-					<div className='bg-gray-800 rounded-lg max-w-md w-full p-6'>
-						<h2 className='text-xl font-bold mb-4'>Record Payment</h2>
+			{/* Receive Order Modal */}
+			{showReceiveModal && selectedOrderForReceive && (
+				<div className='fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto'>
+					<div className='bg-gray-800 rounded-lg max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto'>
+						<h2 className='text-xl font-bold mb-4'>Receive Order</h2>
 						<p className='text-sm text-gray-400 mb-4'>
-							Bill: {selectedBillForPayment.billNumber} -{' '}
-							{selectedBillForPayment.vendorName}
+							PO: {selectedOrderForReceive.poNumber} -{' '}
+							{selectedOrderForReceive.vendorName}
 						</p>
 
 						<div className='space-y-4'>
-							<div>
-								<label className='block text-sm text-gray-400 mb-1'>
-									Payment Amount
-								</label>
-								<input
-									type='number'
-									step='0.01'
-									value={paymentAmount}
-									onChange={(e) => setPaymentAmount(e.target.value)}
-									className='w-full p-2 bg-gray-700 rounded text-white'
-									placeholder='Enter amount'
-								/>
-								<p className='text-xs text-gray-500 mt-1'>
-									Remaining due:{' '}
-									{formatCurrency(
-										selectedBillForPayment.totalAmount -
-											selectedBillForPayment.paidAmount
-									)}
-								</p>
-							</div>
-
-							<div>
-								<label className='block text-sm text-gray-400 mb-1'>
-									Payment Date
-								</label>
-								<input
-									type='date'
-									value={paymentDate}
-									onChange={(e) => setPaymentDate(e.target.value)}
-									className='w-full p-2 bg-gray-700 rounded text-white'
-								/>
-							</div>
-
-							<div>
-								<label className='block text-sm text-gray-400 mb-1'>
-									Payment Method
-								</label>
-								<select
-									value={paymentMethod}
-									onChange={(e) => setPaymentMethod(e.target.value)}
-									className='w-full p-2 bg-gray-700 rounded text-white'>
-									<option value='bank_transfer'>Bank Transfer</option>
-									<option value='check'>Check</option>
-									<option value='credit_card'>Credit Card</option>
-									<option value='cash'>Cash</option>
-									<option value='other'>Other</option>
-								</select>
-							</div>
+							{selectedOrderForReceive.items.map((item) => (
+								<div
+									key={item.id}
+									className='border border-gray-700 rounded p-3'>
+									<p className='font-medium mb-2'>{item.description}</p>
+									<div className='grid grid-cols-2 gap-4 text-sm'>
+										<div>
+											<span className='text-gray-400'>Ordered:</span>
+											<span className='ml-2'>{item.quantity}</span>
+										</div>
+										<div>
+											<span className='text-gray-400'>Received so far:</span>
+											<span className='ml-2'>{item.receivedQuantity || 0}</span>
+										</div>
+										<div className='col-span-2'>
+											<label className='block text-gray-400 mb-1'>
+												Quantity to Receive
+											</label>
+											<input
+												type='number'
+												min='0'
+												max={item.quantity - (item.receivedQuantity || 0)}
+												value={receiveItems[item.id] || 0}
+												onChange={(e) =>
+													setReceiveItems({
+														...receiveItems,
+														[item.id]: parseInt(e.target.value) || 0,
+													})
+												}
+												className='w-full p-2 bg-gray-700 rounded text-white'
+											/>
+										</div>
+									</div>
+								</div>
+							))}
 						</div>
 
 						<div className='flex justify-end space-x-3 mt-6'>
 							<button
 								onClick={() => {
-									setShowPaymentModal(false);
-									setSelectedBillForPayment(null);
+									setShowReceiveModal(false);
+									setSelectedOrderForReceive(null);
 								}}
 								className='px-4 py-2 bg-gray-700 rounded hover:bg-gray-600'>
 								Cancel
 							</button>
 							<button
-								onClick={handleRecordPayment}
+								onClick={handleSubmitReceive}
 								className='px-4 py-2 bg-green-500 rounded hover:bg-green-600'>
-								Record Payment
+								Confirm Receipt
 							</button>
 						</div>
 					</div>

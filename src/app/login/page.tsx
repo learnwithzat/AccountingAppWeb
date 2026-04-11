@@ -6,11 +6,13 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import API from '@/lib/api';
 import { saveToken } from '@/lib/auth';
+import { useAuthStore } from '@/store/authStore';
 import { Loader2, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function LoginPage() {
 	const router = useRouter();
+	const { initialize } = useAuthStore();
 
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -35,6 +37,7 @@ export default function LoginPage() {
 			setError(null);
 			const res = await API.post('/auth/login', form);
 			saveToken(res.data.access_token);
+			initialize();
 			router.push('/dashboard');
 		} catch (err: any) {
 			setError(

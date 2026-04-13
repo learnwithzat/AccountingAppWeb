@@ -49,17 +49,19 @@ export default function DashboardPage() {
 	/* ───── LOADING ───── */
 	if (authLoading || dataLoading) {
 		return (
-			<div className='p-10 text-muted-foreground'>Loading dashboard...</div>
+			<div className='p-10 text-gray-500 bg-white min-h-screen'>
+				Loading dashboard...
+			</div>
 		);
 	}
 
 	/* ───── UI ───── */
 	return (
-		<div className='p-6 space-y-6 max-w-7xl'>
+		<div className='p-6 space-y-6 max-w-7xl bg-white min-h-screen text-gray-900'>
 			{/* HEADER */}
 			<div>
-				<h1 className='text-2xl font-semibold'>Live ERP Dashboard</h1>
-				<p className='text-sm text-muted-foreground'>{user?.companyName}</p>
+				<h1 className='text-2xl font-bold'>Live ERP Dashboard</h1>
+				<p className='text-sm text-gray-500'>{user?.companyName}</p>
 			</div>
 
 			{/* KPI CARDS */}

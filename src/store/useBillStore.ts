@@ -3,6 +3,7 @@
 // store/useBillStore.ts
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
+import API from '@/lib/api';
 
 export type BillStatus =
 	| 'draft'
@@ -99,46 +100,49 @@ export const useBillStore = create<BillState>()(
 			fetchBills: async (companyId: string) => {
 				set({ loading: true, error: null });
 				try {
-					const response = await fetch(`/api/companies/${companyId}/bills`);
-					if (!response.ok) throw new Error('Failed to fetch bills');
-					const data = await response.json();
-					set({ bills: data, loading: false });
-				} catch (error) {
-					set({ error: (error as Error).message, loading: false });
+					const response = await API.get(`/companies/${companyId}/bills`);
+					set({ bills: response.data, loading: false });
+				} catch (error: any) {
+					set({
+						error: error.response?.data?.message || error.message,
+						loading: false,
+					});
 				}
 			},
 
 			fetchBillById: async (companyId: string, billId: string) => {
 				set({ loading: true, error: null });
 				try {
-					const response = await fetch(
-						`/api/companies/${companyId}/bills/${billId}`
+					const response = await API.get(
+						`/companies/${companyId}/bills/${billId}`
 					);
-					if (!response.ok) throw new Error('Failed to fetch bill');
-					const data = await response.json();
-					set({ currentBill: data, loading: false });
-				} catch (error) {
-					set({ error: (error as Error).message, loading: false });
+					set({ currentBill: response.data, loading: false });
+				} catch (error: any) {
+					set({
+						error: error.response?.data?.message || error.message,
+						loading: false,
+					});
 				}
 			},
 
 			createBill: async (companyId: string, bill: Partial<Bill>) => {
 				set({ loading: true, error: null });
 				try {
-					const response = await fetch(`/api/companies/${companyId}/bills`, {
-						method: 'POST',
-						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify(bill),
-					});
-					if (!response.ok) throw new Error('Failed to create bill');
-					const newBill = await response.json();
+					const response = await API.post(
+						`/companies/${companyId}/bills`,
+						bill
+					);
+					const newBill = response.data;
 					set((state) => ({
 						bills: [newBill, ...state.bills],
 						loading: false,
 					}));
 					return newBill;
-				} catch (error) {
-					set({ error: (error as Error).message, loading: false });
+				} catch (error: any) {
+					set({
+						error: error.response?.data?.message || error.message,
+						loading: false,
+					});
 					throw error;
 				}
 			},
@@ -150,23 +154,21 @@ export const useBillStore = create<BillState>()(
 			) => {
 				set({ loading: true, error: null });
 				try {
-					const response = await fetch(
-						`/api/companies/${companyId}/bills/${billId}`,
-						{
-							method: 'PUT',
-							headers: { 'Content-Type': 'application/json' },
-							body: JSON.stringify(bill),
-						}
+					const response = await API.put(
+						`/companies/${companyId}/bills/${billId}`,
+						bill
 					);
-					if (!response.ok) throw new Error('Failed to update bill');
-					const updatedBill = await response.json();
+					const updatedBill = response.data;
 					set((state) => ({
 						bills: state.bills.map((b) => (b.id === billId ? updatedBill : b)),
 						currentBill: updatedBill,
 						loading: false,
 					}));
-				} catch (error) {
-					set({ error: (error as Error).message, loading: false });
+				} catch (error: any) {
+					set({
+						error: error.response?.data?.message || error.message,
+						loading: false,
+					});
 					throw error;
 				}
 			},
@@ -178,16 +180,11 @@ export const useBillStore = create<BillState>()(
 			) => {
 				set({ loading: true, error: null });
 				try {
-					const response = await fetch(
-						`/api/companies/${companyId}/bills/${billId}/status`,
-						{
-							method: 'PATCH',
-							headers: { 'Content-Type': 'application/json' },
-							body: JSON.stringify({ status }),
-						}
+					const response = await API.patch(
+						`/companies/${companyId}/bills/${billId}/status`,
+						{ status }
 					);
-					if (!response.ok) throw new Error('Failed to update bill status');
-					const updatedBill = await response.json();
+					const updatedBill = response.data;
 					set((state) => ({
 						bills: state.bills.map((b) => (b.id === billId ? updatedBill : b)),
 						currentBill:
@@ -196,8 +193,11 @@ export const useBillStore = create<BillState>()(
 							:	state.currentBill,
 						loading: false,
 					}));
-				} catch (error) {
-					set({ error: (error as Error).message, loading: false });
+				} catch (error: any) {
+					set({
+						error: error.response?.data?.message || error.message,
+						loading: false,
+					});
 					throw error;
 				}
 			},
@@ -209,23 +209,21 @@ export const useBillStore = create<BillState>()(
 			) => {
 				set({ loading: true, error: null });
 				try {
-					const response = await fetch(
-						`/api/companies/${companyId}/bills/${billId}/payments`,
-						{
-							method: 'POST',
-							headers: { 'Content-Type': 'application/json' },
-							body: JSON.stringify(payment),
-						}
+					const response = await API.post(
+						`/companies/${companyId}/bills/${billId}/payments`,
+						payment
 					);
-					if (!response.ok) throw new Error('Failed to record payment');
-					const updatedBill = await response.json();
+					const updatedBill = response.data;
 					set((state) => ({
 						bills: state.bills.map((b) => (b.id === billId ? updatedBill : b)),
 						currentBill: updatedBill,
 						loading: false,
 					}));
-				} catch (error) {
-					set({ error: (error as Error).message, loading: false });
+				} catch (error: any) {
+					set({
+						error: error.response?.data?.message || error.message,
+						loading: false,
+					});
 					throw error;
 				}
 			},
@@ -233,19 +231,16 @@ export const useBillStore = create<BillState>()(
 			deleteBill: async (companyId: string, billId: string) => {
 				set({ loading: true, error: null });
 				try {
-					const response = await fetch(
-						`/api/companies/${companyId}/bills/${billId}`,
-						{
-							method: 'DELETE',
-						}
-					);
-					if (!response.ok) throw new Error('Failed to delete bill');
+					await API.delete(`/companies/${companyId}/bills/${billId}`);
 					set((state) => ({
 						bills: state.bills.filter((b) => b.id !== billId),
 						loading: false,
 					}));
-				} catch (error) {
-					set({ error: (error as Error).message, loading: false });
+				} catch (error: any) {
+					set({
+						error: error.response?.data?.message || error.message,
+						loading: false,
+					});
 					throw error;
 				}
 			},

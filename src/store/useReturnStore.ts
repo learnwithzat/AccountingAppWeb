@@ -3,6 +3,7 @@
 // store/useReturnStore.ts
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
+import API from '@/lib/api';
 
 export type ReturnStatus =
 	| 'requested'
@@ -102,12 +103,13 @@ export const useReturnStore = create<ReturnState>()(
 			fetchReturns: async (companyId: string) => {
 				set({ loading: true, error: null });
 				try {
-					const response = await fetch(`/api/companies/${companyId}/returns`);
-					if (!response.ok) throw new Error('Failed to fetch returns');
-					const data = await response.json();
-					set({ returns: data, loading: false });
-				} catch (error) {
-					set({ error: (error as Error).message, loading: false });
+					const response = await API.get(`/companies/${companyId}/returns`);
+					set({ returns: response.data, loading: false });
+				} catch (error: any) {
+					set({
+						error: error.response?.data?.message || error.message,
+						loading: false,
+					});
 				}
 			},
 

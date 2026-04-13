@@ -78,10 +78,7 @@ const NAV_ITEMS: NavItem[] = [
 	{
 		label: 'Customers',
 		icon: Users,
-		children: [
-			{ href: '/customers/list', label: 'Customer List' },
-			{ href: '/customers/groups', label: 'Groups' },
-		],
+		children: [{ href: '/customers', label: 'Customers' }],
 	},
 
 	// REPORTS

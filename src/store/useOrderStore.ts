@@ -3,6 +3,7 @@
 // store/useOrderStore.ts
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
+import API from '@/lib/api';
 
 export type OrderStatus =
 	| 'draft'
@@ -85,12 +86,13 @@ export const useOrderStore = create<OrderState>()(
 			fetchOrders: async (companyId: string) => {
 				set({ loading: true, error: null });
 				try {
-					const response = await fetch(`/api/companies/${companyId}/orders`);
-					if (!response.ok) throw new Error('Failed to fetch orders');
-					const data = await response.json();
-					set({ orders: data, loading: false });
-				} catch (error) {
-					set({ error: (error as Error).message, loading: false });
+					const response = await API.get(`/companies/${companyId}/orders`);
+					set({ orders: response.data, loading: false });
+				} catch (error: any) {
+					set({
+						error: error.response?.data?.message || error.message,
+						loading: false,
+					});
 				}
 			},
 

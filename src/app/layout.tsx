@@ -3,6 +3,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { ReactNode } from 'react';
+import { AppProvider } from '@/context/app-context';
 
 export const metadata: Metadata = {
 	title: 'Zatgo App',
@@ -12,7 +13,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
 	return (
 		<html lang='en'>
-			<body className='min-h-screen bg-background antialiased'>{children}</body>
+			<body className='min-h-screen bg-background antialiased'>
+				<AppProvider>{children}</AppProvider>
+			</body>
 		</html>
 	);
 }

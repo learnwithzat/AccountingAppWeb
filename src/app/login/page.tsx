@@ -1,150 +1,105 @@
 /** @format */
+
 'use client';
 
-import { KeyboardEvent, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import api from '@/lib/api-client';
+import { useTenant } from '@/hooks/use-tenant';
+import { useApp } from '@/context/app-context';
 import Link from 'next/link';
-import API from '@/lib/api';
-import { saveToken } from '@/lib/auth';
-import { useAuthStore } from '@/store/authStore';
-import { Loader2, AlertCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { authSchema } from '@/lib/validations';
 
 export default function LoginPage() {
+	const [username, setUsername] = useState('');
+	const [password, setPassword] = useState('');
+	const [error, setError] = useState('');
+	const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+	const [isSubmitting, setIsSubmitting] = useState(false);
 	const router = useRouter();
-	const { initialize } = useAuthStore();
+	const { slug } = useTenant();
+	const { login } = useApp();
 
-	const [loading, setLoading] = useState(false);
-	const [error, setError] = useState<string | null>(null);
-	const [form, setForm] = useState({ username: '', password: '' });
-	const [touched, setTouched] = useState({ username: false, password: false });
+	const handleLogin = async (e: React.FormEvent) => {
+		e.preventDefault();
 
-	const validate = (): string | null => {
-		if (!form.username.trim()) return 'Username is required.';
-		if (!form.password) return 'Password is required.';
-		return null;
-	};
-
-	const handleLogin = async () => {
-		const validationError = validate();
-		if (validationError) {
-			setError(validationError);
+		const result = authSchema.safeParse({ username, password });
+		if (!result.success) {
+			const errors: Record<string, string> = {};
+			result.error.issues.forEach((issue) => {
+				errors[issue.path[0] as string] = issue.message;
+			});
+			setFieldErrors(errors);
 			return;
 		}
 
+		setFieldErrors({});
+		setIsSubmitting(true);
+		setError('');
 		try {
-			setLoading(true);
-			setError(null);
-			const res = await API.post('/auth/login', form);
-			saveToken(res.data.access_token);
-			initialize();
+			const response = await api.post('/auth/login', { username, password });
+			await login(response.data.access_token);
 			router.push('/dashboard');
 		} catch (err: any) {
-			setError(
-				err?.response?.data?.message ??
-					'Login failed. Please check your credentials.'
-			);
+			setError(err.response?.data?.message || 'Login failed');
 		} finally {
-			setLoading(false);
+			setIsSubmitting(false);
 		}
 	};
 
-	const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-		if (e.key === 'Enter') handleLogin();
-	};
-
-	const getInputClasses = (field: 'username' | 'password') => {
-		const hasError = touched[field] && !form[field];
-		return cn(
-			'w-full rounded-md border px-3 py-2.5 text-sm text-foreground placeholder-muted-foreground outline-none transition focus:ring-2 bg-input/50',
-			hasError ?
-				'border-destructive focus:border-destructive focus:ring-destructive/20'
-			:	'border-border focus:border-primary focus:ring-ring/20'
-		);
-	};
-
 	return (
-		<div className='flex min-h-screen items-center justify-center bg-background p-6'>
-			<div className='w-full max-w-sm rounded-xl border border-border bg-card p-8 shadow-sm'>
-				{/* Logo */}
-				<div className='mb-7 flex items-center justify-center gap-2'>
-					<span className='h-7 w-7 rounded-md bg-primary' />
-					<span className='text-base font-semibold tracking-tight text-foreground'>
-						ZatGo
-					</span>
-				</div>
-
-				{/* Heading */}
-				<h1 className='mb-1 text-xl font-semibold tracking-tight text-foreground'>
-					Sign in
+		<div className='flex flex-col items-center justify-center min-h-screen p-4'>
+			<div className='w-full max-w-md p-8 space-y-4 bg-white rounded shadow-md'>
+				<h1 className='text-2xl font-bold text-center'>
+					Login to {slug ? slug.toUpperCase() : 'ZatGo'}
 				</h1>
-				<p className='mb-6 text-sm text-muted-foreground'>
-					Welcome back. Enter your credentials to continue.
-				</p>
-
-				{/* Error banner */}
-				{error && (
-					<div className='mb-5 flex items-start gap-2 rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2.5 text-sm text-destructive'>
-						<AlertCircle className='mt-0.5 h-4 w-4 shrink-0' />
-						{error}
+				{error && <p className='text-red-500 text-sm text-center'>{error}</p>}
+				<form
+					onSubmit={handleLogin}
+					className='space-y-4'>
+					<div>
+						<input
+							type='text'
+							placeholder='Username'
+							className={`w-full p-2 border rounded ${fieldErrors.username ? 'border-red-500' : ''}`}
+							value={username}
+							onChange={(e) => setUsername(e.target.value)}
+							required
+						/>
+						{fieldErrors.username && (
+							<p className='text-red-500 text-xs mt-1'>
+								{fieldErrors.username}
+							</p>
+						)}
 					</div>
-				)}
-
-				{/* Username */}
-				<div className='mb-4'>
-					<label
-						htmlFor='username'
-						className='mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
-						Username
-					</label>
-					<input
-						id='username'
-						className={getInputClasses('username')}
-						placeholder='your-username'
-						autoComplete='username'
-						value={form.username}
-						onChange={(e) => setForm({ ...form, username: e.target.value })}
-						onBlur={() => setTouched((t) => ({ ...t, username: true }))}
-						onKeyDown={handleKeyDown}
-					/>
-				</div>
-
-				{/* Password */}
-				<div className='mb-6'>
-					<label
-						htmlFor='password'
-						className='mb-1.5 block text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
-						Password
-					</label>
-					<input
-						id='password'
-						type='password'
-						className={getInputClasses('password')}
-						placeholder='••••••••'
-						autoComplete='current-password'
-						value={form.password}
-						onChange={(e) => setForm({ ...form, password: e.target.value })}
-						onBlur={() => setTouched((t) => ({ ...t, password: true }))}
-						onKeyDown={handleKeyDown}
-					/>
-				</div>
-
-				{/* Submit */}
-				<button
-					onClick={handleLogin}
-					disabled={loading}
-					className='flex w-full items-center justify-center gap-2 rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60'>
-					{loading && <Loader2 className='h-4 w-4 animate-spin' />}
-					{loading ? 'Signing in…' : 'Sign in'}
-				</button>
-
-				{/* Register link */}
-				<p className='mt-5 text-center text-sm text-muted-foreground'>
+					<div>
+						<input
+							type='password'
+							placeholder='Password'
+							className={`w-full p-2 border rounded ${fieldErrors.password ? 'border-red-500' : ''}`}
+							value={password}
+							onChange={(e) => setPassword(e.target.value)}
+							required
+						/>
+						{fieldErrors.password && (
+							<p className='text-red-500 text-xs mt-1'>
+								{fieldErrors.password}
+							</p>
+						)}
+					</div>
+					<button
+						type='submit'
+						disabled={isSubmitting}
+						className='w-full p-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50'>
+						{isSubmitting ? 'Signing In...' : 'Sign In'}
+					</button>
+				</form>
+				<p className='text-center text-sm text-gray-600'>
 					Don't have an account?{' '}
 					<Link
 						href='/register'
-						className='font-medium text-primary hover:underline'>
-						Create one
+						className='text-blue-600 hover:underline'>
+						Register
 					</Link>
 				</p>
 			</div>

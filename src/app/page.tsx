@@ -1,10 +1,24 @@
 /** @format */
 
-import { redirect } from 'next/navigation';
+'use client';
 
-export default function HomePage() {
-	// Redirect to login page
-	redirect('/login');
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { AuthService } from '@/services/auth.service';
 
-	return null; // No UI needed
+export default function RootPage() {
+	const router = useRouter();
+
+	useEffect(() => {
+		const token = AuthService.getToken();
+
+		if (!token) {
+			router.replace('/login');
+			return;
+		}
+
+		router.replace('/dashboard');
+	}, []);
+
+	return <div style={{ padding: 40 }}>Loading...</div>;
 }

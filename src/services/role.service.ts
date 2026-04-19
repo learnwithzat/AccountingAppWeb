@@ -1,0 +1,33 @@
+/** @format */
+
+import { api } from '@/lib/api';
+
+export const RoleService = {
+	//////////////////////////////////////////////////////
+	// ROLES
+	//////////////////////////////////////////////////////
+	getAll: () => api.get('/role'),
+
+	getOne: (id: string) => api.get(`/role/${id}`),
+
+	create: (data: any) => api.post('/role', data),
+
+	//////////////////////////////////////////////////////
+	// FIXED: backend uses PATCH, not PUT
+	//////////////////////////////////////////////////////
+	update: (id: string, data: any) => api.patch(`/role/${id}`, data),
+
+	remove: (id: string) => api.delete(`/role/${id}`),
+
+	//////////////////////////////////////////////////////
+	// IAM STYLE PERMISSION ASSIGNMENT
+	//////////////////////////////////////////////////////
+	assignPermissions: (id: string, permissionIds: string[]) =>
+		api.post(`/role/${id}/permissions`, {
+			permissionIds,
+		}),
+	//////////////////////////////////////////////////////
+	// PERMISSIONS (FIX MISSING FUNCTION)
+	//////////////////////////////////////////////////////
+	getPermissions: () => api.get('/permission'),
+};

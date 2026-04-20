@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-
+import { useSetup } from '@/hooks/useSetup';
 import { TenantService } from '@/services/tenant.service';
 import { AuthService } from '@/services/auth.service';
 
@@ -28,35 +28,20 @@ export default function SetupPage() {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState('');
 
+	const { handleSetup } = useSetup();
+
+	
+
+
 	const setup = async () => {
-		setError('');
-
-		if (!tenantName || !slug || !name || !email || !username || !password) {
-			setError('All fields are required');
-			return;
-		}
-
-		try {
-			setLoading(true);
-
-			const res = await AuthService.setup({
-				name,
-				email,
-				username,
-				password,
-				tenantName,
-				slug,
-			});
-
-			localStorage.setItem('token', res.access_token);
-			localStorage.setItem('tenantId', res.tenant.id);
-
-			router.push('/');
-		} catch (err: any) {
-			setError(err?.response?.data?.message || 'Setup failed');
-		} finally {
-			setLoading(false);
-		}
+		await handleSetup({
+			name,
+			email,
+			username,
+			password,
+			tenantName,
+			slug,
+		});
 	};
 	return (
 		<div className='min-h-screen flex items-center justify-center bg-muted/40 p-4'>
@@ -96,7 +81,14 @@ export default function SetupPage() {
 								<Input
 									placeholder='acme-corp'
 									value={slug}
-									onChange={(e) => setSlug(e.target.value.toLowerCase())}
+									onChange={(e) =>
+										setSlug(
+											e.target.value
+												.toLowerCase()
+												.replace(/[^a-z0-9-]/g, '')
+												.replace(/\s+/g, '-')
+										)
+									}
 								/>
 							</div>
 						</CardContent>

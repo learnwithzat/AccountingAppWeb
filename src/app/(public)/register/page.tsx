@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 import { AuthService } from '@/services/auth.service';
+import { useSetup } from '@/hooks/useSetup';
 
 export default function RegisterPage() {
 	const router = useRouter();
@@ -35,48 +36,19 @@ export default function RegisterPage() {
 	//////////////////////////////////////////////////////
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState('');
-
-	//////////////////////////////////////////////////////
+	const { handleSetup } = useSetup();
+	//////////////////////////////////////
 	// REGISTER = FULL SETUP FLOW
 	//////////////////////////////////////////////////////
 	const register = async () => {
-		setError('');
-
-		if (!tenantName || !slug || !name || !email || !username || !password) {
-			setError('All fields are required');
-			return;
-		}
-
-		try {
-			setLoading(true);
-
-			//////////////////////////////////////////////////////
-			// CALL SAME SETUP API (UNIFIED FLOW)
-			//////////////////////////////////////////////////////
-			const res = await AuthService.setup({
-				name,
-				email,
-				username,
-				password,
-				tenantName,
-				slug,
-			});
-
-			//////////////////////////////////////////////////////
-			// STORE AUTH (SINGLE SOURCE OF TRUTH)
-			//////////////////////////////////////////////////////
-			localStorage.setItem('token', res.access_token);
-			localStorage.setItem('tenantId', res.tenant.id);
-
-			//////////////////////////////////////////////////////
-			// REDIRECT TO APP
-			//////////////////////////////////////////////////////
-			router.replace('/dashboard');
-		} catch (err: any) {
-			setError(err?.response?.data?.message || 'Registration failed');
-		} finally {
-			setLoading(false);
-		}
+		await handleSetup({
+			name,
+			email,
+			username,
+			password,
+			tenantName,
+			slug,
+		});
 	};
 
 	return (
@@ -116,7 +88,14 @@ export default function RegisterPage() {
 								<Label>Slug</Label>
 								<Input
 									value={slug}
-									onChange={(e) => setSlug(e.target.value.toLowerCase())}
+									onChange={(e) =>
+										setSlug(
+											e.target.value
+												.toLowerCase()
+												.replace(/[^a-z0-9-]/g, '')
+												.replace(/\s+/g, '-')
+										)
+									}
 									placeholder='acme-corp'
 								/>
 							</div>
@@ -177,3 +156,7 @@ export default function RegisterPage() {
 		</div>
 	);
 }
+function handleSetup(arg0: { name: string; email: string; username: string; password: string; tenantName: string; slug: string; }) {
+	throw new Error('Function not implemented.');
+}
+

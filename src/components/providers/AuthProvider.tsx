@@ -1,15 +1,21 @@
 /** @format */
-
 'use client';
 
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { AuthService } from '@/services/auth.service';
 
+type Membership = {
+	tenant: { id: string };
+	role: {
+		permissions?: { permission: { key: string } }[];
+	};
+};
+
 type AuthContextType = {
 	user: any;
 	tenant: any;
 	role: any;
-	memberships: any[];
+	memberships: Membership[];
 	permissions: string[];
 	activeTenantId?: string;
 	loading: boolean;
@@ -25,21 +31,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	const [user, setUser] = useState<any>(null);
 	const [tenant, setTenant] = useState<any>(null);
 	const [role, setRole] = useState<any>(null);
-	const [memberships, setMemberships] = useState<any[]>([]);
+	const [memberships, setMemberships] = useState<Membership[]>([]);
 	const [permissions, setPermissions] = useState<string[]>([]);
-	const [activeTenantId, setActiveTenantId] = useState<string | undefined>(
-		undefined,
-	);
+	const [activeTenantId, setActiveTenantId] = useState<string>();
 	const [loading, setLoading] = useState(true);
 
 	const mountedRef = useRef(true);
 
 	//////////////////////////////////////////////////////
-	// LOGOUT
+	// HELPERS
 	//////////////////////////////////////////////////////
-	const logout = () => {
-		AuthService.logout();
+	const extractPermissions = (role: any) =>
+		role?.permissions?.map((p: any) => p.permission.key) || [];
 
+	const resetState = () => {
 		setUser(null);
 		setTenant(null);
 		setRole(null);
@@ -49,84 +54,72 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	};
 
 	//////////////////////////////////////////////////////
+	// LOGOUT
+	//////////////////////////////////////////////////////
+	const logout = () => {
+		AuthService.logout();
+		resetState();
+	};
+
+	//////////////////////////////////////////////////////
+	// APPLY MEMBERSHIP
+	//////////////////////////////////////////////////////
+	const applyMembership = (membership: Membership) => {
+		const tenantData = membership.tenant;
+		const roleData = membership.role;
+
+		setTenant(tenantData);
+		setRole(roleData);
+		setActiveTenantId(tenantData.id);
+		setPermissions(extractPermissions(roleData));
+
+		AuthService.setTenant(tenantData.id);
+	};
+
+	//////////////////////////////////////////////////////
 	// SWITCH TENANT
 	//////////////////////////////////////////////////////
 	const switchTenant = async (tenantId: string) => {
-		if (!user) return;
-
-		const membership = memberships.find((m: any) => m?.tenant?.id === tenantId);
+		const membership = memberships.find((m) => m?.tenant?.id === tenantId);
 
 		if (!membership) {
 			console.warn('Tenant not found:', tenantId);
 			return;
 		}
 
-		const tenantData = membership.tenant;
-		const roleData = membership.role;
-
-		setTenant(tenantData);
-		setRole(roleData);
-		setActiveTenantId(tenantId);
-
-		const perms =
-			roleData?.permissions?.map((p: any) => p.permission.key) || [];
-
-		setPermissions(perms);
-
-		AuthService.setTenant(tenantId);
+		applyMembership(membership);
 	};
 
 	//////////////////////////////////////////////////////
-	// INIT AUTH
+	// INIT AUTH (Single Source of Truth)
 	//////////////////////////////////////////////////////
 	const initAuth = async () => {
 		try {
 			setLoading(true);
 
 			const token = AuthService.getToken();
-
-			if (!token) {
-				logout();
-				return;
-			}
+			if (!token) return logout();
 
 			const userData = await AuthService.me();
 			if (!mountedRef.current) return;
 
-			if (!userData) {
-				logout();
-				return;
-			}
+			if (!userData) return logout();
 
-			const allMemberships = userData.memberships || [];
+			const allMemberships: Membership[] = userData.memberships || [];
+			if (!allMemberships.length) return logout();
+
+			setUser(userData);
 			setMemberships(allMemberships);
 
 			const savedTenant = AuthService.getTenant?.();
 
 			const membership =
-				allMemberships.find(
-					(m: { tenant?: { id?: string } }) => m?.tenant?.id === savedTenant,
-				) ?? allMemberships[0];
+				allMemberships.find((m) => m?.tenant?.id === savedTenant) ||
+				allMemberships[0];
 
-			if (!membership) {
-				logout();
-				return;
-			}
+			if (!membership) return logout();
 
-			const tenantData = membership.tenant;
-			const roleData = membership.role;
-
-			setUser(userData);
-			setTenant(tenantData);
-			setRole(roleData);
-			setActiveTenantId(tenantData.id);
-
-			const perms =
-				roleData?.permissions?.map((p: any) => p.permission.key) || [];
-
-			setPermissions(perms);
-
-			AuthService.setTenant(tenantData.id);
+			applyMembership(membership);
 		} catch (err) {
 			console.error('AUTH ERROR:', err);
 			logout();
@@ -143,71 +136,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	};
 
 	//////////////////////////////////////////////////////
-	// INIT
+	// INIT (ONLY ONCE)
 	//////////////////////////////////////////////////////
 	useEffect(() => {
-		if (!activeTenantId && activeTenantId !== undefined) return;
-
-		let mounted = true;
-
-		const run = async () => {
-			try {
-				setLoading(true);
-
-				const token = AuthService.getToken();
-				if (!token) {
-					if (mounted) logout();
-					return;
-				}
-
-				const userData = await AuthService.me();
-				if (!mounted) return;
-
-				if (!userData) {
-					if (mounted) logout();
-					return;
-				}
-
-				const allMemberships = userData.memberships || [];
-				setMemberships(allMemberships);
-
-				const savedTenant = AuthService.getTenant?.();
-
-				let membership =
-					allMemberships.find((m: any) => m?.tenant?.id === savedTenant) ||
-					allMemberships[0];
-
-				if (!membership) {
-					if (mounted) logout();
-					return;
-				}
-
-				const tenantData = membership.tenant;
-				const roleData = membership.role;
-
-				setUser(userData);
-				setTenant(tenantData);
-				setRole(roleData);
-				setActiveTenantId(tenantData.id);
-
-				const perms =
-					roleData?.permissions?.map((p: any) => p.permission.key) || [];
-
-				setPermissions(perms);
-
-				AuthService.setTenant(tenantData.id);
-			} catch (err) {
-				console.error('AUTH ERROR:', err);
-				if (mounted) logout();
-			} finally {
-				if (mounted) setLoading(false);
-			}
-		};
-
-		run();
+		mountedRef.current = true;
+		initAuth();
 
 		return () => {
-			mounted = false;
+			mountedRef.current = false;
 		};
 	}, []);
 

@@ -13,9 +13,10 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useSetup } from '@/hooks/useSetup';
 import { TenantService } from '@/services/tenant.service';
 import { AuthService } from '@/services/auth.service';
-
+import { useTranslation } from 'react-i18next';
 export default function SetupPage() {
 	const router = useRouter();
+	const { t } = useTranslation();
 
 	const [tenantName, setTenantName] = useState('');
 	const [slug, setSlug] = useState('');
@@ -29,9 +30,6 @@ export default function SetupPage() {
 	const [error, setError] = useState('');
 
 	const { handleSetup } = useSetup();
-
-	
-
 
 	const setup = async () => {
 		await handleSetup({
@@ -47,10 +45,8 @@ export default function SetupPage() {
 		<div className='min-h-screen flex items-center justify-center bg-muted/40 p-4'>
 			<div className='w-full max-w-3xl space-y-6'>
 				<div className='text-center space-y-1'>
-					<h1 className='text-3xl font-bold'>Create Workspace</h1>
-					<p className='text-muted-foreground'>
-						Set up your SaaS tenant and admin account
-					</p>
+					<h1 className='text-3xl font-bold'>{t('setup.title')}</h1>
+					<p className='text-muted-foreground'>{t('setup.description')}</p>
 				</div>
 
 				{error && (
@@ -63,12 +59,12 @@ export default function SetupPage() {
 					{/* Tenant */}
 					<Card>
 						<CardHeader>
-							<CardTitle>Workspace</CardTitle>
+							<CardTitle>{t('tenant.workspace')}</CardTitle>
 						</CardHeader>
 
 						<CardContent className='space-y-4'>
 							<div>
-								<Label>Workspace Name</Label>
+								<Label>{t('tenant.name')}</Label>
 								<Input
 									placeholder='Acme Corp'
 									value={tenantName}
@@ -77,7 +73,7 @@ export default function SetupPage() {
 							</div>
 
 							<div>
-								<Label>Slug</Label>
+								<Label>{t('tenant.slug')}</Label>
 								<Input
 									placeholder='acme-corp'
 									value={slug}
@@ -86,7 +82,7 @@ export default function SetupPage() {
 											e.target.value
 												.toLowerCase()
 												.replace(/[^a-z0-9-]/g, '')
-												.replace(/\s+/g, '-')
+												.replace(/\s+/g, '-'),
 										)
 									}
 								/>
@@ -97,12 +93,12 @@ export default function SetupPage() {
 					{/* User */}
 					<Card>
 						<CardHeader>
-							<CardTitle>Admin Account</CardTitle>
+							<CardTitle>{t('auth.admin_account')}</CardTitle>
 						</CardHeader>
 
 						<CardContent className='space-y-4'>
 							<div>
-								<Label>Name</Label>
+								<Label>{t('common.name')}</Label>
 								<Input
 									value={name}
 									onChange={(e) => setName(e.target.value)}
@@ -110,7 +106,7 @@ export default function SetupPage() {
 							</div>
 
 							<div>
-								<Label>Email</Label>
+								<Label>{t('auth.email')}</Label>
 								<Input
 									type='email'
 									value={email}
@@ -119,7 +115,7 @@ export default function SetupPage() {
 							</div>
 
 							<div>
-								<Label>Username</Label>
+								<Label>{t('auth.username')}</Label>
 								<Input
 									value={username}
 									onChange={(e) => setUsername(e.target.value)}
@@ -127,7 +123,7 @@ export default function SetupPage() {
 							</div>
 
 							<div>
-								<Label>Password</Label>
+								<Label>{t('auth.password')}</Label>
 								<Input
 									type='password'
 									value={password}
@@ -142,7 +138,7 @@ export default function SetupPage() {
 					className='w-full'
 					onClick={setup}
 					disabled={loading}>
-					{loading ? 'Creating Workspace...' : 'Create Workspace'}
+					{loading ? t('setup.creating') : t('setup.create_button')}
 				</Button>
 			</div>
 		</div>

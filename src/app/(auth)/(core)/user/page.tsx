@@ -8,9 +8,10 @@ import { RoleService } from '@/services/role.service';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/providers/AuthProvider';
-
+import { useTranslation } from 'react-i18next';
 export default function UserPage() {
 	const { activeTenantId } = useAuth();
+	const { t } = useTranslation();
 
 	const [users, setUsers] = useState<any[]>([]);
 	const [roles, setRoles] = useState<any[]>([]);
@@ -73,7 +74,7 @@ export default function UserPage() {
 	//////////////////////////////////////////////////////
 	const create = async () => {
 		if (!form.roleId) {
-			alert('Role required');
+			alert(t('role.error_required'));
 			return;
 		}
 
@@ -112,9 +113,9 @@ export default function UserPage() {
 		<div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 			{/* HEADER */}
 			<div>
-				<h1 style={{ fontSize: 24, fontWeight: 700 }}>User Management</h1>
+				<h1 style={{ fontSize: 24, fontWeight: 700 }}>{t('user.title')}</h1>
 				<p style={{ color: '#64748b' }}>
-					Active Tenant: {activeTenantId}
+					{t('tenant.active')}: {activeTenantId}
 				</p>
 			</div>
 
@@ -129,57 +130,49 @@ export default function UserPage() {
 					gap: 10,
 				}}>
 				<Input
-					placeholder='Name'
+					placeholder={t('common.name')}
 					value={form.name}
-					onChange={(e) =>
-						setForm({ ...form, name: e.target.value })
-					}
+					onChange={(e) => setForm({ ...form, name: e.target.value })}
 				/>
 
 				<Input
-					placeholder='Email'
+					placeholder={t('auth.email')}
 					value={form.email}
-					onChange={(e) =>
-						setForm({ ...form, email: e.target.value })
-					}
+					onChange={(e) => setForm({ ...form, email: e.target.value })}
 				/>
 
 				<Input
-					placeholder='Username'
+					placeholder={t('auth.username')}
 					value={form.username}
-					onChange={(e) =>
-						setForm({ ...form, username: e.target.value })
-					}
+					onChange={(e) => setForm({ ...form, username: e.target.value })}
 				/>
 
 				<Input
 					type='password'
-					placeholder='Password'
+					placeholder={t('auth.password')}
 					value={form.password}
-					onChange={(e) =>
-						setForm({ ...form, password: e.target.value })
-					}
+					onChange={(e) => setForm({ ...form, password: e.target.value })}
 				/>
 
 				<select
 					value={form.roleId}
-					onChange={(e) =>
-						setForm({ ...form, roleId: e.target.value })
-					}>
-					<option value=''>Select Role</option>
+					onChange={(e) => setForm({ ...form, roleId: e.target.value })}>
+					<option value=''>{t('role.select')}</option>
 					{roles.map((r) => (
-						<option key={r.id} value={r.id}>
+						<option
+							key={r.id}
+							value={r.id}>
 							{r.name}
 						</option>
 					))}
 				</select>
 
-				<Button onClick={create}>Create User</Button>
+				<Button onClick={create}>{t('user.create_button')}</Button>
 			</div>
 
 			{/* SEARCH */}
 			<Input
-				placeholder='Search users...'
+				placeholder={t('user.search_placeholder')}
 				value={search}
 				onChange={(e) => setSearch(e.target.value)}
 			/>
@@ -194,18 +187,17 @@ export default function UserPage() {
 						fontWeight: 600,
 						background: '#f1f5f9',
 					}}>
-					<div>Name</div>
-					<div>Email</div>
-					<div>Username</div>
-					<div>Role</div>
-					<div>Status</div>
-					<div>Actions</div>
+					<div>{t('common.name')}</div>
+					<div>{t('auth.email')}</div>
+					<div>{t('auth.username')}</div>
+					<div>{t('role.label')}</div>
+					<div>{t('common.status')}</div>
+					<div>{t('common.actions')}</div>
 				</div>
 
-				{loading ? (
-					<div style={{ padding: 20 }}>Loading...</div>
-				) : (
-					filtered.map((u) => {
+				{loading ?
+					<div style={{ padding: 20 }}>{t('common.loading')}</div>
+				:	filtered.map((u) => {
 						const m = u.memberships?.find(
 							(x: any) => x.tenantId === activeTenantId,
 						);
@@ -215,15 +207,14 @@ export default function UserPage() {
 								key={u.id}
 								style={{
 									display: 'grid',
-									gridTemplateColumns:
-										'2fr 2fr 2fr 2fr 1fr 1fr',
+									gridTemplateColumns: '2fr 2fr 2fr 2fr 1fr 1fr',
 									padding: 12,
 									borderTop: '1px solid #eee',
 								}}>
 								<div>{u.name}</div>
 								<div>{u.email}</div>
 								<div>{u.username}</div>
-								<div>{m?.role?.name || 'N/A'}</div>
+								<div>{m?.role?.name || t('common.na')}</div>
 
 								<div>
 									<span
@@ -231,13 +222,11 @@ export default function UserPage() {
 											padding: '4px 8px',
 											borderRadius: 6,
 											fontSize: 12,
-											background: u.isActive
-												? '#dcfce7'
-												: '#fee2e2',
+											background: u.isActive ? '#dcfce7' : '#fee2e2',
 										}}>
-										{u.isActive
-											? 'ACTIVE'
-											: 'DISABLED'}
+										{u.isActive ?
+											t('common.status_active')
+										:	t('common.status_disabled')}
 									</span>
 								</div>
 
@@ -252,24 +241,21 @@ export default function UserPage() {
 												activeTenantId,
 											).then(loadUsers)
 										}>
-										Toggle
+										{t('common.toggle')}
 									</Button>
 
 									<Button
 										onClick={() =>
-											UserService.remove(
-												u.id,
-												activeTenantId,
-											).then(loadUsers)
+											UserService.remove(u.id, activeTenantId).then(loadUsers)
 										}
 										style={{ background: 'red' }}>
-										Delete
+										{t('common.delete')}
 									</Button>
 								</div>
 							</div>
 						);
 					})
-				)}
+				}
 			</div>
 		</div>
 	);

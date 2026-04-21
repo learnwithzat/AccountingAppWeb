@@ -4,10 +4,11 @@
 
 import { useEffect, useState } from 'react';
 import { BillingService } from '@/services/billing.service';
-
+import { useTranslation } from 'react-i18next';
 export default function SubscriptionPage() {
 	const [subs, setSubs] = useState<any[]>([]);
 	const [plans, setPlans] = useState<any[]>([]);
+	const { t } = useTranslation();
 	const [tenantId, setTenantId] = useState('');
 	const [planId, setPlanId] = useState('');
 
@@ -47,7 +48,9 @@ export default function SubscriptionPage() {
 	//////////////////////////////////////////////////////
 	return (
 		<div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-			<h1 style={{ fontSize: 24, fontWeight: 700 }}>Subscriptions</h1>
+			<h1 style={{ fontSize: 24, fontWeight: 700 }}>
+				{t('subscription.title')}
+			</h1>
 
 			{/* ASSIGN PLAN */}
 			<div
@@ -59,7 +62,7 @@ export default function SubscriptionPage() {
 					gap: 10,
 				}}>
 				<input
-					placeholder='Tenant ID'
+					placeholder={t('tenant.id_placeholder')}
 					value={tenantId}
 					onChange={(e) => setTenantId(e.target.value)}
 				/>
@@ -67,7 +70,7 @@ export default function SubscriptionPage() {
 				<select
 					value={planId}
 					onChange={(e) => setPlanId(e.target.value)}>
-					<option value=''>Select Plan</option>
+					<option value=''>{t('plan.select')}</option>
 					{plans.map((p) => (
 						<option
 							key={p.id}
@@ -77,7 +80,7 @@ export default function SubscriptionPage() {
 					))}
 				</select>
 
-				<button onClick={assign}>Assign</button>
+				<button onClick={assign}>{t('subscription.assign')}</button>
 			</div>
 
 			{/* LIST */}
@@ -93,7 +96,9 @@ export default function SubscriptionPage() {
 						}}>
 						<div>
 							<strong>{s.tenant?.name}</strong>
-							<div style={{ fontSize: 12 }}>Plan: {s.plan?.name}</div>
+							<div style={{ fontSize: 12 }}>
+								{t('subscription.plan')}: {s.plan?.name}
+							</div>
 						</div>
 
 						<span
@@ -103,7 +108,7 @@ export default function SubscriptionPage() {
 								fontSize: 12,
 								background: s.status === 'ACTIVE' ? '#dcfce7' : '#fee2e2',
 							}}>
-							{s.status}
+							{t(`subscription.status.${s.status.toLowerCase()}`)}
 						</span>
 					</div>
 				))}

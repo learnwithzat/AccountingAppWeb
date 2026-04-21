@@ -6,10 +6,11 @@ import { useEffect, useState } from 'react';
 import { OrgService } from '@/services/org.service';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-
+import { useTranslation } from 'react-i18next';
 export default function BranchPage() {
 	const [branches, setBranches] = useState<any[]>([]);
 	const [companies, setCompanies] = useState<any[]>([]);
+	const { t } = useTranslation();
 
 	const [name, setName] = useState('');
 	const [companyId, setCompanyId] = useState('');
@@ -51,7 +52,7 @@ export default function BranchPage() {
 	//////////////////////////////////////////////////////
 	return (
 		<div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-			<h1 style={{ fontSize: 24, fontWeight: 700 }}>Branch Management</h1>
+			<h1 style={{ fontSize: 24, fontWeight: 700 }}>{t('branch.title')}</h1>
 
 			{/* CREATE */}
 			<div
@@ -63,7 +64,7 @@ export default function BranchPage() {
 					gap: 10,
 				}}>
 				<Input
-					placeholder='Branch name'
+					placeholder={t('branch.name_placeholder')}
 					value={name}
 					onChange={(e: any) => setName(e.target.value)}
 				/>
@@ -76,7 +77,7 @@ export default function BranchPage() {
 						borderRadius: 6,
 						border: '1px solid #ddd',
 					}}>
-					<option value=''>Select Company</option>
+					<option value=''>{t('company.select')}</option>
 					{companies.map((c) => (
 						<option
 							key={c.id}
@@ -86,7 +87,7 @@ export default function BranchPage() {
 					))}
 				</select>
 
-				<Button onClick={create}>Create</Button>
+				<Button onClick={create}>{t('common.create')}</Button>
 			</div>
 
 			{/* LIST */}
@@ -103,14 +104,14 @@ export default function BranchPage() {
 						<div>
 							<strong>{b.name}</strong>
 							<div style={{ fontSize: 12, color: '#64748b' }}>
-								Company: {b.company?.name}
+								{t('company.label')}: {b.company?.name}
 							</div>
 						</div>
 
 						<Button
 							onClick={() => OrgService.deleteBranch(b.id).then(load)}
 							style={{ background: 'red' }}>
-							Delete
+							{t('common.delete')}
 						</Button>
 					</div>
 				))}

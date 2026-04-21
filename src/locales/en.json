@@ -1,0 +1,122 @@
+{
+	"common": {
+		"loading": "Loading...",
+		"create": "Create",
+		"delete": "Delete",
+		"edit": "Edit",
+		"name": "Name",
+		"status": "Status",
+		"created_at": "Created At",
+		"actions": "Actions",
+		"delete_failed": "Delete failed",
+		"na": "N/A",
+		"type": "Type",
+		"status_active": "ACTIVE",
+		"status_disabled": "DISABLED",
+		"toggle": "Toggle"
+	},
+	"menu": {
+		"dashboard": "Dashboard",
+		"tenant": "Tenants",
+		"user": "Users",
+		"company": "Companies",
+		"role": "Roles",
+		"plan": "Plans",
+		"subscription": "Subscriptions",
+		"membership": "Memberships",
+		"audit-log": "Audit Logs"
+	},
+	"role": {
+		"title": "Role & Permission Matrix",
+		"description": "AWS IAM-style access control system",
+		"permission": "Permission",
+		"update_failed": "Failed to update permissions",
+		"label": "Role",
+		"select": "Select Role",
+		"error_required": "Role required"
+	},
+	"tenant": {
+		"title": "Tenant Management",
+		"description": "Manage organizations, status, and access",
+		"name": "Tenant Name",
+		"slug": "Slug",
+		"search_placeholder": "Search tenants...",
+		"status": {
+			"all": "All",
+			"active": "Active",
+			"suspended": "Suspended",
+			"deleted": "Deleted"
+		},
+		"no_data": "No tenants found",
+		"create_failed": "Failed to create tenant",
+		"confirm_delete": "Are you sure you want to delete this tenant?",
+		"label": "Tenant",
+		"workspace": "Workspace",
+		"active": "Active Tenant",
+		"id_placeholder": "Tenant ID"
+	},
+	"membership": {
+		"title": "Memberships",
+		"load_failed": "Failed to load memberships",
+		"no_data": "No memberships found"
+	},
+	"dashboard": {
+		"title": "Dashboard",
+		"stats": {
+			"users": "Users",
+			"companies": "Companies",
+			"branches": "Branches",
+			"roles": "Roles"
+		},
+		"sections": {
+			"subscription": "Subscription",
+			"access": "My Access",
+			"activity": "Recent Activity"
+		},
+		"activity": {
+			"none": "No activity"
+		}
+	},
+	"company": {
+		"title": "Company Management",
+		"name_placeholder": "Company name",
+		"label": "Company",
+		"select": "Select Company"
+	},
+	"auth": {
+		"login": "Login",
+		"username": "Username",
+		"password": "Password",
+		"error_required": "Username and password are required",
+		"error_invalid": "Invalid credentials",
+		"signing_in": "Signing in...",
+		"login_button": "Login",
+		"no_account": "No account?",
+		"create_account": "Create account",
+		"register_title": "Create Account",
+		"register_description": "Setup your workspace and admin access",
+		"admin_user": "Admin User",
+		"admin_account": "Admin Account",
+		"email": "Email",
+		"creating_account": "Creating Account...",
+		"user": "User"
+	},
+	"audit": {
+		"title": "Audit Logs",
+		"description": "Track every action in your system (CloudTrail style)",
+		"search_placeholder": "Search logs (action, entity...)",
+		"entity": "Entity",
+		"ip": "IP"
+	},
+	"subscription": {
+		"title": "Subscriptions",
+		"trial": "TRIAL",
+		"no_plan": "No Plan",
+		"plan": "Plan",
+		"status": {
+			"active": "Active",
+			"suspended": "Suspended"
+		},
+		"assign": "Assign"
+	}
+}

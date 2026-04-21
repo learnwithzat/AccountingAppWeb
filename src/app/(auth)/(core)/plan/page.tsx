@@ -6,9 +6,10 @@ import { useEffect, useState } from 'react';
 import { BillingService } from '@/services/billing.service';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-
+import { useTranslation } from 'react-i18next';
 export default function PlansPage() {
 	const [plans, setPlans] = useState<any[]>([]);
+	const { t } = useTranslation();
 
 	const [form, setForm] = useState({
 		name: '',
@@ -47,7 +48,7 @@ export default function PlansPage() {
 	//////////////////////////////////////////////////////
 	return (
 		<div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-			<h1 style={{ fontSize: 24, fontWeight: 700 }}>Subscription Plans</h1>
+			<h1 style={{ fontSize: 24, fontWeight: 700 }}>{t('plan.title')}</h1>
 
 			{/* CREATE */}
 			<div
@@ -59,13 +60,13 @@ export default function PlansPage() {
 					gap: 10,
 				}}>
 				<Input
-					placeholder='Plan name'
+					placeholder={t('plan.name')}
 					value={form.name}
 					onChange={(e: any) => setForm({ ...form, name: e.target.value })}
 				/>
 
 				<Input
-					placeholder='Price'
+					placeholder={t('plan.price')}
 					value={form.price}
 					onChange={(e: any) => setForm({ ...form, price: e.target.value })}
 				/>
@@ -73,11 +74,11 @@ export default function PlansPage() {
 				<select
 					value={form.interval}
 					onChange={(e) => setForm({ ...form, interval: e.target.value })}>
-					<option value='monthly'>Monthly</option>
-					<option value='yearly'>Yearly</option>
+					<option value='monthly'>{t('plan.interval.monthly')}</option>
+					<option value='yearly'>{t('plan.interval.yearly')}</option>
 				</select>
 
-				<Button onClick={create}>Create</Button>
+				<Button onClick={create}>{t('common.create')}</Button>
 			</div>
 
 			{/* LIST */}
@@ -94,14 +95,14 @@ export default function PlansPage() {
 						<div>
 							<strong>{p.name}</strong>
 							<div style={{ fontSize: 12, color: '#64748b' }}>
-								${p.price} / {p.interval}
+								${p.price} / {t(`plan.interval.${p.interval}`)}
 							</div>
 						</div>
 
 						<Button
 							onClick={() => BillingService.deletePlan(p.id).then(load)}
 							style={{ background: 'red' }}>
-							Delete
+							{t('common.delete')}
 						</Button>
 					</div>
 				))}

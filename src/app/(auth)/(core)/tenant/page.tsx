@@ -2,11 +2,11 @@
 
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { TenantService } from '@/services/tenant.service';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-
+import { useTranslation } from 'react-i18next';
 type Tenant = {
 	id: string;
 	name: string;
@@ -18,6 +18,7 @@ type Tenant = {
 export default function Page() {
 	const [data, setData] = useState<Tenant[]>([]);
 	const [loading, setLoading] = useState(false);
+	const { t, i18n } = useTranslation();
 
 	const [name, setName] = useState('');
 	const [slug, setSlug] = useState('');
@@ -26,32 +27,26 @@ export default function Page() {
 	const [status, setStatus] = useState<'ALL' | Tenant['status']>('ALL');
 
 	//////////////////////////////////////////////////////
-	// LOAD (SAFE)
+	// REFRESH (REUSABLE & SAFE)
+	//////////////////////////////////////////////////////
+	const refresh = useCallback(async () => {
+		try {
+			setLoading(true);
+			const res = await TenantService.getAll();
+			setData(res?.data || []);
+		} catch (err) {
+			console.error(err);
+		} finally {
+			setLoading(false);
+		}
+	}, []);
+
+	//////////////////////////////////////////////////////
+	// INIT
 	//////////////////////////////////////////////////////
 	useEffect(() => {
-		let mounted = true;
-
-		const load = async () => {
-			try {
-				setLoading(true);
-				const res = await TenantService.getAll();
-
-				if (!mounted) return;
-
-				setData(res?.data || []);
-			} catch (err) {
-				console.error(err);
-			} finally {
-				if (mounted) setLoading(false);
-			}
-		};
-
-		load();
-
-		return () => {
-			mounted = false;
-		};
-	}, []);
+		refresh();
+	}, [refresh]);
 
 	//////////////////////////////////////////////////////
 	// CREATE
@@ -68,7 +63,7 @@ export default function Page() {
 			await refresh();
 		} catch (err) {
 			console.error(err);
-			alert('Failed to create tenant');
+			alert(t('tenant.create_failed'));
 		}
 	};
 
@@ -76,7 +71,7 @@ export default function Page() {
 	// DELETE
 	//////////////////////////////////////////////////////
 	const remove = async (id: string) => {
-		const ok = confirm('Are you sure you want to delete this tenant?');
+		const ok = confirm(t('tenant.confirm_delete'));
 		if (!ok) return;
 
 		try {
@@ -84,22 +79,7 @@ export default function Page() {
 			await refresh();
 		} catch (err) {
 			console.error(err);
-			alert('Delete failed');
-		}
-	};
-
-	//////////////////////////////////////////////////////
-	// REFRESH (REUSABLE)
-	//////////////////////////////////////////////////////
-	const refresh = async () => {
-		try {
-			setLoading(true);
-			const res = await TenantService.getAll();
-			setData(res?.data || []);
-		} catch (err) {
-			console.error(err);
-		} finally {
-			setLoading(false);
+			alert(t('common.delete_failed'));
 		}
 	};
 
@@ -128,10 +108,8 @@ export default function Page() {
 	return (
 		<div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 			<div>
-				<h1 style={{ fontSize: 24, fontWeight: 700 }}>Tenant Management</h1>
-				<p style={{ color: '#64748b' }}>
-					Manage organizations, status, and access
-				</p>
+				<h1 style={{ fontSize: 24, fontWeight: 700 }}>{t('tenant.title')}</h1>
+				<p style={{ color: '#64748b' }}>{t('tenant.description')}</p>
 			</div>
 
 			<div
@@ -143,7 +121,7 @@ export default function Page() {
 					borderRadius: 10,
 				}}>
 				<Input
-					placeholder='Tenant Name'
+					placeholder={t('tenant.name')}
 					value={name}
 					onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
 						setName(e.target.value)
@@ -151,14 +129,14 @@ export default function Page() {
 				/>
 
 				<Input
-					placeholder='Slug'
+					placeholder={t('tenant.slug')}
 					value={slug}
 					onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
 						setSlug(e.target.value)
 					}
 				/>
 
-				<Button onClick={create}>Create</Button>
+				<Button onClick={create}>{t('common.create')}</Button>
 			</div>
 
 			<div
@@ -170,7 +148,7 @@ export default function Page() {
 					borderRadius: 10,
 				}}>
 				<Input
-					placeholder='Search tenants...'
+					placeholder={t('tenant.search_placeholder')}
 					value={search}
 					onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
 						setSearch(e.target.value)
@@ -179,16 +157,16 @@ export default function Page() {
 
 				<select
 					value={status}
-					onChange={(e) => setStatus(e.target.value as any)}
+					onChange={(e) => setStatus(e.target.value as typeof status)}
 					style={{
 						padding: 8,
 						borderRadius: 6,
 						border: '1px solid #ddd',
 					}}>
-					<option value='ALL'>All</option>
-					<option value='ACTIVE'>Active</option>
-					<option value='SUSPENDED'>Suspended</option>
-					<option value='DELETED'>Deleted</option>
+					<option value='ALL'>{t('tenant.status.all')}</option>
+					<option value='ACTIVE'>{t('tenant.status.active')}</option>
+					<option value='SUSPENDED'>{t('tenant.status.suspended')}</option>
+					<option value='DELETED'>{t('tenant.status.deleted')}</option>
 				</select>
 			</div>
 
@@ -201,20 +179,22 @@ export default function Page() {
 						fontWeight: 600,
 						background: '#f1f5f9',
 					}}>
-					<div>Name</div>
-					<div>Slug</div>
-					<div>Status</div>
-					<div>Created</div>
-					<div>Actions</div>
+					<div>{t('common.name')}</div>
+					<div>{t('tenant.slug')}</div>
+					<div>{t('common.status')}</div>
+					<div>{t('common.created_at')}</div>
+					<div>{t('common.actions')}</div>
 				</div>
 
 				{loading ?
-					<div style={{ padding: 20 }}>Loading...</div>
+					<div style={{ padding: 20 }}>{t('common.loading')}</div>
 				: filtered.length === 0 ?
-					<div style={{ padding: 20, color: '#64748b' }}>No tenants found</div>
-				:	filtered.map((t) => (
+					<div style={{ padding: 20, color: '#64748b' }}>
+						{t('tenant.no_data')}
+					</div>
+				:	filtered.map((tenant) => (
 						<div
-							key={t.id}
+							key={tenant.id}
 							style={{
 								display: 'grid',
 								gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr',
@@ -223,10 +203,10 @@ export default function Page() {
 								alignItems: 'center',
 							}}>
 							<div>
-								<strong>{t.name}</strong>
+								<strong>{tenant.name}</strong>
 							</div>
 
-							<div>{t.slug}</div>
+							<div>{tenant.slug}</div>
 
 							<div>
 								<span
@@ -235,30 +215,34 @@ export default function Page() {
 										borderRadius: 6,
 										fontSize: 12,
 										background:
-											t.status === 'ACTIVE' ? '#dcfce7'
-											: t.status === 'SUSPENDED' ? '#fef3c7'
+											tenant.status === 'ACTIVE' ? '#dcfce7'
+											: tenant.status === 'SUSPENDED' ? '#fef3c7'
 											: '#fee2e2',
 									}}>
-									{t.status}
+									{t(`tenant.status.${tenant.status.toLowerCase()}`)}
 								</span>
 							</div>
 
-							<div>{new Date(t.createdAt).toLocaleDateString()}</div>
+							<div>
+								{tenant.createdAt ?
+									new Date(tenant.createdAt).toLocaleDateString(i18n.language)
+								:	t('common.na')}
+							</div>
 
 							<div style={{ display: 'flex', gap: 6 }}>
 								<Button
-									onClick={() => console.log('edit', t.id)}
+									onClick={() => console.log('edit', tenant.id)}
 									style={{ padding: '4px 8px' }}>
-									Edit
+									{t('common.edit')}
 								</Button>
 
 								<Button
-									onClick={() => remove(t.id)}
+									onClick={() => remove(tenant.id)}
 									style={{
 										padding: '4px 8px',
 										background: 'red',
 									}}>
-									Delete
+									{t('common.delete')}
 								</Button>
 							</div>
 						</div>

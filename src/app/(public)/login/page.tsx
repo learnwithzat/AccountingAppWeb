@@ -11,9 +11,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-
+import { useTranslation } from 'react-i18next';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 export default function LoginPage() {
 	const router = useRouter();
+	const { t } = useTranslation();
 
 	const [username, setUsername] = useState('');
 	const [password, setPassword] = useState('');
@@ -28,7 +30,7 @@ export default function LoginPage() {
 		setError('');
 
 		if (!username || !password) {
-			setError('Username and password are required');
+			setError(t('auth.error_required'));
 			return;
 		}
 
@@ -40,7 +42,7 @@ export default function LoginPage() {
 			// full refresh so AuthProvider reloads correctly
 			window.location.href = '/dashboard';
 		} catch (e: any) {
-			setError(e?.response?.data?.message || 'Invalid credentials');
+			setError(e?.response?.data?.message || t('auth.error_invalid'));
 		} finally {
 			setLoading(false);
 		}
@@ -48,9 +50,15 @@ export default function LoginPage() {
 
 	return (
 		<div className='flex items-center justify-center h-screen bg-muted/40'>
+			<div className='absolute top-4 right-4 rtl:right-auto rtl:left-4'>
+				<LanguageSwitcher />
+			</div>
+
 			<Card className='w-[350px] shadow-xl'>
 				<CardHeader>
-					<CardTitle className='text-2xl text-center'>Login</CardTitle>
+					<CardTitle className='text-2xl text-center'>
+						{t('auth.login')}
+					</CardTitle>
 				</CardHeader>
 
 				<CardContent className='space-y-4'>
@@ -61,14 +69,14 @@ export default function LoginPage() {
 					)}
 
 					<Input
-						placeholder='Username'
+						placeholder={t('auth.username')}
 						value={username}
 						onChange={(e) => setUsername(e.target.value)}
 					/>
 
 					<Input
 						type='password'
-						placeholder='Password'
+						placeholder={t('auth.password')}
 						value={password}
 						onChange={(e) => setPassword(e.target.value)}
 					/>
@@ -77,16 +85,16 @@ export default function LoginPage() {
 						className='w-full'
 						onClick={login}
 						disabled={loading}>
-						{loading ? 'Signing in...' : 'Login'}
+						{loading ? t('auth.signing_in') : t('auth.login_button')}
 					</Button>
 
 					{/* 👇 Register link */}
 					<p className='text-center text-sm text-muted-foreground'>
-						No account?{' '}
+						{t('auth.no_account')}{' '}
 						<Link
 							href='/register'
 							className='text-blue-600 hover:underline'>
-							Create account
+							{t('auth.create_account')}
 						</Link>
 					</p>
 				</CardContent>

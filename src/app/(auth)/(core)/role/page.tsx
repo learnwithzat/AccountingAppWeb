@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from 'react';
 import { RoleService } from '@/services/role.service';
-
+import { useTranslation } from 'react-i18next';
 type Permission = {
 	id: string;
 	key: string;
@@ -25,6 +25,7 @@ export default function RolePage() {
 	const [roles, setRoles] = useState<Role[]>([]);
 	const [permissions, setPermissions] = useState<Permission[]>([]);
 	const [loading, setLoading] = useState(false);
+	const { t } = useTranslation();
 
 	//////////////////////////////////////////////////////
 	// LOAD (SAFE)
@@ -63,34 +64,31 @@ export default function RolePage() {
 	// CHECK
 	//////////////////////////////////////////////////////
 	const hasPermission = (role: Role, permissionId: string) => {
-		return role.permissions?.some(
-			(rp) => rp.permissionId === permissionId,
-		);
+		return role.permissions?.some((rp) => rp.permissionId === permissionId);
 	};
 
 	//////////////////////////////////////////////////////
 	// OPTIMISTIC TOGGLE (FAST UX)
 	//////////////////////////////////////////////////////
 	const toggle = async (role: Role, permissionId: string) => {
-		const current =
-			role.permissions?.map((p) => p.permissionId) || [];
+		const current = role.permissions?.map((p) => p.permissionId) || [];
 
 		const updated =
-			current.includes(permissionId)
-				? current.filter((id) => id !== permissionId)
-				: [...current, permissionId];
+			current.includes(permissionId) ?
+				current.filter((id) => id !== permissionId)
+			:	[...current, permissionId];
 
 		// ✅ optimistic UI update
 		setRoles((prev) =>
 			prev.map((r) =>
-				r.id === role.id
-					? {
-							...r,
-							permissions: updated.map((id) => ({
-								permissionId: id,
-							})),
-					  }
-					: r,
+				r.id === role.id ?
+					{
+						...r,
+						permissions: updated.map((id) => ({
+							permissionId: id,
+						})),
+					}
+				:	r,
 			),
 		);
 
@@ -102,13 +100,13 @@ export default function RolePage() {
 			// ❌ rollback on failure
 			setRoles((prev) =>
 				prev.map((r) =>
-					r.id === role.id
-						? role // restore original
-						: r,
+					r.id === role.id ?
+						role // restore original
+					:	r,
 				),
 			);
 
-			alert('Failed to update permissions');
+			alert(t('role.update_failed'));
 		}
 	};
 
@@ -118,12 +116,8 @@ export default function RolePage() {
 	return (
 		<div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 			<div>
-				<h1 style={{ fontSize: 24, fontWeight: 700 }}>
-					Role & Permission Matrix
-				</h1>
-				<p style={{ color: '#64748b' }}>
-					AWS IAM-style access control system
-				</p>
+				<h1 style={{ fontSize: 24, fontWeight: 700 }}>{t('role.title')}</h1>
+				<p style={{ color: '#64748b' }}>{t('role.description')}</p>
 			</div>
 
 			<div
@@ -140,16 +134,15 @@ export default function RolePage() {
 						fontWeight: 600,
 						background: '#f1f5f9',
 					}}>
-					<div>Permission</div>
+					<div>{t('role.permission')}</div>
 					{roles.map((role) => (
 						<div key={role.id}>{role.name}</div>
 					))}
 				</div>
 
-				{loading ? (
-					<div style={{ padding: 20 }}>Loading...</div>
-				) : (
-					permissions.map((perm) => (
+				{loading ?
+					<div style={{ padding: 20 }}>{t('common.loading')}</div>
+				:	permissions.map((perm) => (
 						<div
 							key={perm.id}
 							style={{
@@ -161,9 +154,7 @@ export default function RolePage() {
 							}}>
 							<div>
 								<strong>{perm.label}</strong>
-								<div style={{ fontSize: 12, color: '#64748b' }}>
-									{perm.key}
-								</div>
+								<div style={{ fontSize: 12, color: '#64748b' }}>{perm.key}</div>
 							</div>
 
 							{roles.map((role) => (
@@ -184,7 +175,7 @@ export default function RolePage() {
 							))}
 						</div>
 					))
-				)}
+				}
 			</div>
 		</div>
 	);

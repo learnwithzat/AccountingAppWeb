@@ -1,0 +1,122 @@
+{
+	"common": {
+		"loading": "جاري التحميل...",
+		"create": "إنشاء",
+		"delete": "حذف",
+		"edit": "تعديل",
+		"name": "الاسم",
+		"status": "الحالة",
+		"created_at": "تاريخ الإنشاء",
+		"actions": "الإجراءات",
+		"delete_failed": "فشل الحذف",
+		"na": "غير متاح",
+		"type": "النوع",
+		"status_active": "نشط",
+		"status_disabled": "معطل",
+		"toggle": "تبديل"
+	},
+	"menu": {
+		"dashboard": "لوحة القيادة",
+		"tenant": "المستأجرون",
+		"user": "المستخدمون",
+		"company": "الشركات",
+		"role": "الأدوار",
+		"plan": "الخطط",
+		"subscription": "الاشتراكات",
+		"membership": "العضويات",
+		"audit-log": "سجلات التدقيق"
+	},
+	"role": {
+		"title": "مصفوفة الأدوار والصلاحيات",
+		"description": "نظام التحكم في الوصول بنمط AWS IAM",
+		"permission": "الصلاحية",
+		"update_failed": "فشل تحديث الصلاحيات",
+		"label": "الدور",
+		"select": "اختر الدور",
+		"error_required": "الدور مطلوب"
+	},
+	"tenant": {
+		"title": "إدارة المستأجرين",
+		"description": "إدارة المنظمات والحالة والوصول",
+		"name": "اسم المستأجر",
+		"slug": "المعرف المختصر",
+		"search_placeholder": "البحث عن المستأجرين...",
+		"status": {
+			"all": "الكل",
+			"active": "نشط",
+			"suspended": "معلق",
+			"deleted": "محذوف"
+		},
+		"no_data": "لم يتم العثور على مستأجرين",
+		"create_failed": "فشل إنشاء المستأجر",
+		"confirm_delete": "هل أنت متأكد أنك تريد حذف هذا المستأجر؟",
+		"label": "المستأجر",
+		"workspace": "مساحة العمل",
+		"active": "المستأجر النشط",
+		"id_placeholder": "معرف المستأجر"
+	},
+	"membership": {
+		"title": "العضويات",
+		"load_failed": "فشل تحميل العضويات",
+		"no_data": "لم يتم العثور على عضويات"
+	},
+	"dashboard": {
+		"title": "لوحة القيادة",
+		"stats": {
+			"users": "المستخدمون",
+			"companies": "الشركات",
+			"branches": "الفروع",
+			"roles": "الأدوار"
+		},
+		"sections": {
+			"subscription": "الاشتراك",
+			"access": "صلاحياتي",
+			"activity": "النشاط الأخير"
+		},
+		"activity": {
+			"none": "لا يوجد نشاط"
+		}
+	},
+	"company": {
+		"title": "إدارة الشركات",
+		"name_placeholder": "اسم الشركة",
+		"label": "الشركة",
+		"select": "اختر الشركة"
+	},
+	"auth": {
+		"login": "تسجيل الدخول",
+		"username": "اسم المستخدم",
+		"password": "كلمة المرور",
+		"error_required": "اسم المستخدم وكلمة المرور مطلوبان",
+		"error_invalid": "بيانات الاعتماد غير صالحة",
+		"signing_in": "جاري تسجيل الدخول...",
+		"login_button": "دخول",
+		"no_account": "ليس لديك حساب؟",
+		"create_account": "إنشاء حساب",
+		"register_title": "إنشاء حساب",
+		"register_description": "إعداد مساحة العمل الخاصة بك ووصول المسؤول",
+		"admin_user": "المستخدم المسؤول",
+		"admin_account": "حساب المسؤول",
+		"email": "البريد الإلكتروني",
+		"creating_account": "جاري إنشاء الحساب...",
+		"user": "المستخدم"
+	},
+	"audit": {
+		"title": "سجلات التدقيق",
+		"description": "تتبع كل إجراء في نظامك (بنمط CloudTrail)",
+		"search_placeholder": "البحث في السجلات (إجراء، كيان...)",
+		"entity": "الكيان",
+		"ip": "عنوان IP"
+	},
+	"subscription": {
+		"title": "الاشتراكات",
+		"trial": "تجريبي",
+		"no_plan": "لا توجد خطة",
+		"plan": "الخطة",
+		"status": {
+			"active": "نشط",
+			"suspended": "معلق"
+		},
+		"assign": "تعيين"
+	}
+}

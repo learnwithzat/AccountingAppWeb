@@ -12,9 +12,10 @@ import {
 	ClockIcon,
 	CreditCardIcon,
 } from '@heroicons/react/24/outline';
-
+import { useTranslation } from 'react-i18next';
 export default function DashboardPage() {
 	const { user, permissions } = useAuth();
+	const { t } = useTranslation();
 
 	const membership = user?.memberships?.find((m: any) => m.isActive);
 	const tenant = membership?.tenant;
@@ -32,7 +33,7 @@ export default function DashboardPage() {
 		<div className='space-y-6'>
 			{/* HEADER */}
 			<div className='border-b pb-4'>
-				<h1 className='text-3xl font-bold'>Dashboard</h1>
+				<h1 className='text-3xl font-bold'>{t('dashboard.title')}</h1>
 				<div className='text-sm text-gray-500 flex gap-2 items-center'>
 					<BuildingOfficeIcon className='h-4 w-4' />
 					{tenant?.name} ({tenant?.slug})
@@ -42,22 +43,22 @@ export default function DashboardPage() {
 			{/* KPI */}
 			<div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4'>
 				<StatCard
-					title='Users'
+					title={t('dashboard.stats.users')}
 					value={user?.memberships?.length ?? 0}
 					icon={UserGroupIcon}
 				/>
 				<StatCard
-					title='Companies'
+					title={t('dashboard.stats.companies')}
 					value={companiesCount}
 					icon={BuildingOfficeIcon}
 				/>
 				<StatCard
-					title='Branches'
+					title={t('dashboard.stats.branches')}
 					value={branchesCount}
 					icon={MapPinIcon}
 				/>
 				<StatCard
-					title='Roles'
+					title={t('dashboard.stats.roles')}
 					value={rolesCount}
 					icon={KeyIcon}
 				/>
@@ -69,12 +70,22 @@ export default function DashboardPage() {
 				<div className='border rounded-lg p-6'>
 					<div className='flex gap-2 items-center border-b pb-3'>
 						<CreditCardIcon className='h-5 w-5' />
-						<h3 className='font-semibold'>Subscription</h3>
+						<h3 className='font-semibold'>
+							{t('dashboard.sections.subscription')}
+						</h3>
 					</div>
 
 					<div className='mt-4 space-y-2'>
-						<div>Status: {subscription?.status ?? 'TRIAL'}</div>
-						<div>Plan: {subscription?.plan?.name ?? 'No Plan'}</div>
+						<div>
+							{t('common.status')}:{' '}
+							{subscription?.status ?
+								t(`subscription.status.${subscription.status.toLowerCase()}`)
+							:	t('subscription.trial')}
+						</div>
+						<div>
+							{t('subscription.plan')}:{' '}
+							{subscription?.plan?.name ?? t('subscription.no_plan')}
+						</div>
 					</div>
 				</div>
 
@@ -82,12 +93,16 @@ export default function DashboardPage() {
 				<div className='border rounded-lg p-6'>
 					<div className='flex gap-2 items-center border-b pb-3'>
 						<KeyIcon className='h-5 w-5' />
-						<h3 className='font-semibold'>My Access</h3>
+						<h3 className='font-semibold'>{t('dashboard.sections.access')}</h3>
 					</div>
 
 					<div className='mt-4 space-y-2'>
-						<div>Role: {role?.name}</div>
-						<div>Type: {role?.type}</div>
+						<div>
+							{t('role.label')}: {role?.name}
+						</div>
+						<div>
+							{t('common.type')}: {role?.type}
+						</div>
 
 						<div className='flex flex-wrap gap-2 mt-2'>
 							{permissions.slice(0, 8).map((p) => (
@@ -106,12 +121,12 @@ export default function DashboardPage() {
 			<div className='border rounded-lg p-6'>
 				<div className='flex gap-2 items-center border-b pb-3'>
 					<ClockIcon className='h-5 w-5' />
-					<h3 className='font-semibold'>Recent Activity</h3>
+					<h3 className='font-semibold'>{t('dashboard.sections.activity')}</h3>
 				</div>
 
 				<div className='mt-4'>
 					{auditLogs.length === 0 ?
-						<p className='text-gray-400'>No activity</p>
+						<p className='text-gray-400'>{t('dashboard.activity.none')}</p>
 					:	auditLogs.slice(0, 5).map((log: any) => (
 							<div
 								key={log.id}

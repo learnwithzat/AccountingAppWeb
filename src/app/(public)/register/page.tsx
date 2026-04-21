@@ -13,9 +13,10 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 
 import { AuthService } from '@/services/auth.service';
 import { useSetup } from '@/hooks/useSetup';
-
+import { useTranslation } from 'react-i18next';
 export default function RegisterPage() {
 	const router = useRouter();
+	const { t } = useTranslation();
 
 	//////////////////////////////////////////////////////
 	// WORKSPACE (TENANT)
@@ -55,9 +56,9 @@ export default function RegisterPage() {
 		<div className='min-h-screen flex items-center justify-center bg-muted/40 p-4'>
 			<div className='w-full max-w-3xl space-y-6'>
 				<div className='text-center'>
-					<h1 className='text-3xl font-bold'>Create Account</h1>
+					<h1 className='text-3xl font-bold'>{t('auth.register_title')}</h1>
 					<p className='text-muted-foreground'>
-						Setup your workspace and admin access
+						{t('auth.register_description')}
 					</p>
 				</div>
 
@@ -71,12 +72,12 @@ export default function RegisterPage() {
 					{/* TENANT */}
 					<Card>
 						<CardHeader>
-							<CardTitle>Workspace</CardTitle>
+							<CardTitle>{t('tenant.workspace')}</CardTitle>
 						</CardHeader>
 
 						<CardContent className='space-y-4'>
 							<div>
-								<Label>Workspace Name</Label>
+								<Label>{t('tenant.name')}</Label>
 								<Input
 									value={tenantName}
 									onChange={(e) => setTenantName(e.target.value)}
@@ -85,7 +86,7 @@ export default function RegisterPage() {
 							</div>
 
 							<div>
-								<Label>Slug</Label>
+								<Label>{t('tenant.slug')}</Label>
 								<Input
 									value={slug}
 									onChange={(e) =>
@@ -93,7 +94,7 @@ export default function RegisterPage() {
 											e.target.value
 												.toLowerCase()
 												.replace(/[^a-z0-9-]/g, '')
-												.replace(/\s+/g, '-')
+												.replace(/\s+/g, '-'),
 										)
 									}
 									placeholder='acme-corp'
@@ -105,12 +106,12 @@ export default function RegisterPage() {
 					{/* USER */}
 					<Card>
 						<CardHeader>
-							<CardTitle>Admin User</CardTitle>
+							<CardTitle>{t('auth.admin_user')}</CardTitle>
 						</CardHeader>
 
 						<CardContent className='space-y-4'>
 							<div>
-								<Label>Name</Label>
+								<Label>{t('common.name')}</Label>
 								<Input
 									value={name}
 									onChange={(e) => setName(e.target.value)}
@@ -118,7 +119,7 @@ export default function RegisterPage() {
 							</div>
 
 							<div>
-								<Label>Email</Label>
+								<Label>{t('auth.email')}</Label>
 								<Input
 									type='email'
 									value={email}
@@ -127,7 +128,7 @@ export default function RegisterPage() {
 							</div>
 
 							<div>
-								<Label>Username</Label>
+								<Label>{t('auth.username')}</Label>
 								<Input
 									value={username}
 									onChange={(e) => setUsername(e.target.value)}
@@ -135,7 +136,7 @@ export default function RegisterPage() {
 							</div>
 
 							<div>
-								<Label>Password</Label>
+								<Label>{t('auth.password')}</Label>
 								<Input
 									type='password'
 									value={password}
@@ -150,13 +151,19 @@ export default function RegisterPage() {
 					className='w-full'
 					onClick={register}
 					disabled={loading}>
-					{loading ? 'Creating Account...' : 'Create Account'}
+					{loading ? t('auth.creating_account') : t('auth.create_account')}
 				</Button>
 			</div>
 		</div>
 	);
 }
-function handleSetup(arg0: { name: string; email: string; username: string; password: string; tenantName: string; slug: string; }) {
+function handleSetup(arg0: {
+	name: string;
+	email: string;
+	username: string;
+	password: string;
+	tenantName: string;
+	slug: string;
+}) {
 	throw new Error('Function not implemented.');
 }
-

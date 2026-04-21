@@ -7,23 +7,91 @@ import { TenantService } from '@/services/tenant.service';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
+type Tenant = {
+	id: string;
+	name: string;
+	slug: string;
+	status: 'ACTIVE' | 'SUSPENDED' | 'DELETED';
+	createdAt: string;
+};
+
 export default function Page() {
-	const [data, setData] = useState<any[]>([]);
+	const [data, setData] = useState<Tenant[]>([]);
 	const [loading, setLoading] = useState(false);
 
 	const [name, setName] = useState('');
 	const [slug, setSlug] = useState('');
 
-	//////////////////////////////////////////////////////
-	// FILTERS
-	//////////////////////////////////////////////////////
 	const [search, setSearch] = useState('');
-	const [status, setStatus] = useState('ALL');
+	const [status, setStatus] = useState<'ALL' | Tenant['status']>('ALL');
 
 	//////////////////////////////////////////////////////
-	// LOAD
+	// LOAD (SAFE)
 	//////////////////////////////////////////////////////
-	const load = async () => {
+	useEffect(() => {
+		let mounted = true;
+
+		const load = async () => {
+			try {
+				setLoading(true);
+				const res = await TenantService.getAll();
+
+				if (!mounted) return;
+
+				setData(res?.data || []);
+			} catch (err) {
+				console.error(err);
+			} finally {
+				if (mounted) setLoading(false);
+			}
+		};
+
+		load();
+
+		return () => {
+			mounted = false;
+		};
+	}, []);
+
+	//////////////////////////////////////////////////////
+	// CREATE
+	//////////////////////////////////////////////////////
+	const create = async () => {
+		if (!name || !slug) return;
+
+		try {
+			await TenantService.create({ name, slug });
+
+			setName('');
+			setSlug('');
+
+			await refresh();
+		} catch (err) {
+			console.error(err);
+			alert('Failed to create tenant');
+		}
+	};
+
+	//////////////////////////////////////////////////////
+	// DELETE
+	//////////////////////////////////////////////////////
+	const remove = async (id: string) => {
+		const ok = confirm('Are you sure you want to delete this tenant?');
+		if (!ok) return;
+
+		try {
+			await TenantService.remove(id);
+			await refresh();
+		} catch (err) {
+			console.error(err);
+			alert('Delete failed');
+		}
+	};
+
+	//////////////////////////////////////////////////////
+	// REFRESH (REUSABLE)
+	//////////////////////////////////////////////////////
+	const refresh = async () => {
 		try {
 			setLoading(true);
 			const res = await TenantService.getAll();
@@ -35,25 +103,8 @@ export default function Page() {
 		}
 	};
 
-	useEffect(() => {
-		load();
-	}, []);
-
 	//////////////////////////////////////////////////////
-	// CREATE
-	//////////////////////////////////////////////////////
-	const create = async () => {
-		if (!name || !slug) return;
-
-		await TenantService.create({ name, slug });
-
-		setName('');
-		setSlug('');
-		load();
-	};
-
-	//////////////////////////////////////////////////////
-	// FILTERED DATA (CLIENT SIDE)
+	// FILTERED DATA
 	//////////////////////////////////////////////////////
 	const filtered = useMemo(() => {
 		return data.filter((t) => {
@@ -72,22 +123,10 @@ export default function Page() {
 	}, [data, search, status]);
 
 	//////////////////////////////////////////////////////
-	// DELETE (SAFE)
-	//////////////////////////////////////////////////////
-	const remove = async (id: string) => {
-		const ok = confirm('Are you sure you want to delete this tenant?');
-		if (!ok) return;
-
-		await TenantService.remove(id);
-		load();
-	};
-
-	//////////////////////////////////////////////////////
-	// UI
+	// UI (UNCHANGED)
 	//////////////////////////////////////////////////////
 	return (
 		<div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-			{/* HEADER */}
 			<div>
 				<h1 style={{ fontSize: 24, fontWeight: 700 }}>Tenant Management</h1>
 				<p style={{ color: '#64748b' }}>
@@ -95,7 +134,6 @@ export default function Page() {
 				</p>
 			</div>
 
-			{/* CREATE */}
 			<div
 				style={{
 					display: 'flex',
@@ -107,19 +145,22 @@ export default function Page() {
 				<Input
 					placeholder='Tenant Name'
 					value={name}
-					onChange={(e: any) => setName(e.target.value)}
+					onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+						setName(e.target.value)
+					}
 				/>
 
 				<Input
 					placeholder='Slug'
 					value={slug}
-					onChange={(e: any) => setSlug(e.target.value)}
+					onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+						setSlug(e.target.value)
+					}
 				/>
 
 				<Button onClick={create}>Create</Button>
 			</div>
 
-			{/* FILTER BAR */}
 			<div
 				style={{
 					display: 'flex',
@@ -131,12 +172,14 @@ export default function Page() {
 				<Input
 					placeholder='Search tenants...'
 					value={search}
-					onChange={(e: any) => setSearch(e.target.value)}
+					onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+						setSearch(e.target.value)
+					}
 				/>
 
 				<select
 					value={status}
-					onChange={(e) => setStatus(e.target.value)}
+					onChange={(e) => setStatus(e.target.value as any)}
 					style={{
 						padding: 8,
 						borderRadius: 6,
@@ -149,9 +192,7 @@ export default function Page() {
 				</select>
 			</div>
 
-			{/* TABLE */}
 			<div style={{ background: '#fff', borderRadius: 10 }}>
-				{/* HEADER */}
 				<div
 					style={{
 						display: 'grid',
@@ -167,7 +208,6 @@ export default function Page() {
 					<div>Actions</div>
 				</div>
 
-				{/* BODY */}
 				{loading ?
 					<div style={{ padding: 20 }}>Loading...</div>
 				: filtered.length === 0 ?

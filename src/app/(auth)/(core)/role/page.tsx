@@ -5,59 +5,111 @@
 import { useEffect, useState } from 'react';
 import { RoleService } from '@/services/role.service';
 
+type Permission = {
+	id: string;
+	key: string;
+	label: string;
+};
+
+type RolePermission = {
+	permissionId: string;
+};
+
+type Role = {
+	id: string;
+	name: string;
+	permissions?: RolePermission[];
+};
+
 export default function RolePage() {
-	const [roles, setRoles] = useState<any[]>([]);
-	const [permissions, setPermissions] = useState<any[]>([]);
+	const [roles, setRoles] = useState<Role[]>([]);
+	const [permissions, setPermissions] = useState<Permission[]>([]);
 	const [loading, setLoading] = useState(false);
 
 	//////////////////////////////////////////////////////
-	// LOAD
+	// LOAD (SAFE)
 	//////////////////////////////////////////////////////
-	const load = async () => {
-		setLoading(true);
-
-		try {
-			const [r, p] = await Promise.all([
-				RoleService.getAll(),
-				RoleService.getPermissions(),
-			]);
-
-			setRoles(r.data || []);
-			setPermissions(p.data || []);
-		} catch (err) {
-			console.error(err);
-		}
-
-		setLoading(false);
-	};
-
 	useEffect(() => {
+		let mounted = true;
+
+		const load = async () => {
+			try {
+				setLoading(true);
+
+				const [r, p] = await Promise.all([
+					RoleService.getAll(),
+					RoleService.getPermissions(),
+				]);
+
+				if (!mounted) return;
+
+				setRoles(r?.data || []);
+				setPermissions(p?.data || []);
+			} catch (err) {
+				console.error(err);
+			} finally {
+				if (mounted) setLoading(false);
+			}
+		};
+
 		load();
+
+		return () => {
+			mounted = false;
+		};
 	}, []);
 
 	//////////////////////////////////////////////////////
 	// CHECK
 	//////////////////////////////////////////////////////
-	const hasPermission = (role: any, permissionId: string) => {
+	const hasPermission = (role: Role, permissionId: string) => {
 		return role.permissions?.some(
-			(rp: any) => rp.permissionId === permissionId
+			(rp) => rp.permissionId === permissionId,
 		);
 	};
 
 	//////////////////////////////////////////////////////
-	// FIXED: SMART TOGGLE (BATCH STYLE)
+	// OPTIMISTIC TOGGLE (FAST UX)
 	//////////////////////////////////////////////////////
-	const toggle = async (role: any, permissionId: string) => {
-		const current = role.permissions?.map((p: any) => p.permissionId) || [];
+	const toggle = async (role: Role, permissionId: string) => {
+		const current =
+			role.permissions?.map((p) => p.permissionId) || [];
 
 		const updated =
-			current.includes(permissionId) ?
-				current.filter((id: string) => id !== permissionId)
-			:	[...current, permissionId];
+			current.includes(permissionId)
+				? current.filter((id) => id !== permissionId)
+				: [...current, permissionId];
 
-		await RoleService.assignPermissions(role.id, updated);
+		// ✅ optimistic UI update
+		setRoles((prev) =>
+			prev.map((r) =>
+				r.id === role.id
+					? {
+							...r,
+							permissions: updated.map((id) => ({
+								permissionId: id,
+							})),
+					  }
+					: r,
+			),
+		);
 
-		load();
+		try {
+			await RoleService.assignPermissions(role.id, updated);
+		} catch (err) {
+			console.error(err);
+
+			// ❌ rollback on failure
+			setRoles((prev) =>
+				prev.map((r) =>
+					r.id === role.id
+						? role // restore original
+						: r,
+				),
+			);
+
+			alert('Failed to update permissions');
+		}
 	};
 
 	//////////////////////////////////////////////////////
@@ -69,17 +121,17 @@ export default function RolePage() {
 				<h1 style={{ fontSize: 24, fontWeight: 700 }}>
 					Role & Permission Matrix
 				</h1>
-				<p style={{ color: '#64748b' }}>AWS IAM-style access control system</p>
+				<p style={{ color: '#64748b' }}>
+					AWS IAM-style access control system
+				</p>
 			</div>
 
-			{/* MATRIX */}
 			<div
 				style={{
 					overflowX: 'auto',
 					background: '#fff',
 					borderRadius: 10,
 				}}>
-				{/* HEADER */}
 				<div
 					style={{
 						display: 'grid',
@@ -94,10 +146,10 @@ export default function RolePage() {
 					))}
 				</div>
 
-				{/* ROWS */}
-				{loading ?
+				{loading ? (
 					<div style={{ padding: 20 }}>Loading...</div>
-				:	permissions.map((perm) => (
+				) : (
+					permissions.map((perm) => (
 						<div
 							key={perm.id}
 							style={{
@@ -107,13 +159,13 @@ export default function RolePage() {
 								borderTop: '1px solid #eee',
 								alignItems: 'center',
 							}}>
-							{/* PERMISSION */}
 							<div>
 								<strong>{perm.label}</strong>
-								<div style={{ fontSize: 12, color: '#64748b' }}>{perm.key}</div>
+								<div style={{ fontSize: 12, color: '#64748b' }}>
+									{perm.key}
+								</div>
 							</div>
 
-							{/* ROLE CHECKBOXES */}
 							{roles.map((role) => (
 								<div
 									key={role.id}
@@ -122,13 +174,17 @@ export default function RolePage() {
 										type='checkbox'
 										checked={hasPermission(role, perm.id)}
 										onChange={() => toggle(role, perm.id)}
-										style={{ width: 18, height: 18, cursor: 'pointer' }}
+										style={{
+											width: 18,
+											height: 18,
+											cursor: 'pointer',
+										}}
 									/>
 								</div>
 							))}
 						</div>
 					))
-				}
+				)}
 			</div>
 		</div>
 	);

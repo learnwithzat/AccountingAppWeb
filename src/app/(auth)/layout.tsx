@@ -10,11 +10,11 @@ import { useTranslation } from 'react-i18next';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
 const menu = [
-	{ name: 'Dashboard', path: '/dashboard', permission: 'dashboard.view' },
+	{ name: 'Dashboard', path: '/dashboard', permission: null },
 	{
 		name: 'Expire Manager',
 		path: '/expire-manager',
-		permission: 'document.view',
+		permission: null,
 	},
 	{ name: 'Tenants', path: '/tenant', permission: 'tenant.view' },
 	{ name: 'Users', path: '/user', permission: 'user.view' },

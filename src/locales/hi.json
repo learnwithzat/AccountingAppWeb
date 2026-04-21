@@ -1,0 +1,122 @@
+{
+	"common": {
+		"loading": "लोड हो रहा है...",
+		"create": "बनाएँ",
+		"delete": "हटाएँ",
+		"edit": "संपादित करें",
+		"name": "नाम",
+		"status": "स्थिति",
+		"created_at": "बनाया गया",
+		"actions": "क्रियाएँ",
+		"delete_failed": "हटाने में विफल",
+		"na": "लागू नहीं",
+		"type": "प्रकार",
+		"status_active": "सक्रिय",
+		"status_disabled": "अक्षम",
+		"toggle": "टॉगल करें"
+	},
+	"menu": {
+		"dashboard": "डैशबोर्ड",
+		"tenant": "टेनेंट",
+		"user": "उपयोगकर्ता",
+		"company": "कंपनियाँ",
+		"role": "भूमिकाएं",
+		"plan": "योजनाएं",
+		"subscription": "सदस्यता",
+		"membership": "सदस्यता",
+		"audit-log": "ऑडिट लॉग"
+	},
+	"role": {
+		"title": "भूमिका और अनुमति मैट्रिक्स",
+		"description": "AWS IAM-शैली एक्सेस कंट्रोल सिस्टम",
+		"permission": "अनुमति",
+		"update_failed": "अनुमतियाँ अपडेट करने में विफल",
+		"label": "भूमिका",
+		"select": "भूमिका चुनें",
+		"error_required": "भूमिका आवश्यक है"
+	},
+	"tenant": {
+		"title": "टेनेंट प्रबंधन",
+		"description": "संगठनों, स्थिति और पहुंच का प्रबंधन करें",
+		"name": "टेनेंट का नाम",
+		"slug": "स्लग",
+		"search_placeholder": "टेनेंट खोजें...",
+		"status": {
+			"all": "सभी",
+			"active": "सक्रिय",
+			"suspended": "निलंबित",
+			"deleted": "हटाया गया"
+		},
+		"no_data": "कोई टेनेंट नहीं मिला",
+		"create_failed": "टेनेंट बनाने में विफल",
+		"confirm_delete": "क्या आप वाकई इस टेनेंट को हटाना चाहते हैं?",
+		"label": "टेनेंट",
+		"workspace": "कार्यक्षेत्र",
+		"active": "सक्रिय टेनेंट",
+		"id_placeholder": "टेनेंट आईडी"
+	},
+	"membership": {
+		"title": "सदस्यता",
+		"load_failed": "सदस्यता लोड करने में विफल",
+		"no_data": "कोई सदस्यता नहीं मिली"
+	},
+	"dashboard": {
+		"title": "डैशबोर्ड",
+		"stats": {
+			"users": "उपयोगकर्ता",
+			"companies": "कंपनियाँ",
+			"branches": "शाखाएँ",
+			"roles": "भूमिकाएं"
+		},
+		"sections": {
+			"subscription": "सदस्यता",
+			"access": "मेरी पहुँच",
+			"activity": "हाल की गतिविधि"
+		},
+		"activity": {
+			"none": "कोई गतिविधि नहीं"
+		}
+	},
+	"company": {
+		"title": "कंपनी प्रबंधन",
+		"name_placeholder": "कंपनी का नाम",
+		"label": "कंपनी",
+		"select": "कंपनी चुनें"
+	},
+	"auth": {
+		"login": "लॉगिन",
+		"username": "उपयोगकर्ता नाम",
+		"password": "पासवर्ड",
+		"error_required": "उपयोगकर्ता नाम और पासवर्ड आवश्यक हैं",
+		"error_invalid": "अमान्य क्रेडेंशियल",
+		"signing_in": "लॉग इन हो रहा है...",
+		"login_button": "लॉगिन",
+		"no_account": "खाता नहीं है?",
+		"create_account": "खाता बनाएँ",
+		"register_title": "खाता बनाएँ",
+		"register_description": "अपना कार्यक्षेत्र और व्यवस्थापक पहुँच सेटअप करें",
+		"admin_user": "व्यवस्थापक उपयोगकर्ता",
+		"admin_account": "व्यवस्थापक खाता",
+		"email": "ईमेल",
+		"creating_account": "खाता बनाया जा रहा है...",
+		"user": "उपयोगकर्ता"
+	},
+	"audit": {
+		"title": "ऑडिट लॉग",
+		"description": "अपने सिस्टम में हर क्रिया को ट्रैक करें (CloudTrail शैली)",
+		"search_placeholder": "लॉग खोजें (क्रिया, इकाई...)",
+		"entity": "इकाई",
+		"ip": "आईपी"
+	},
+	"subscription": {
+		"title": "सदस्यता",
+		"trial": "ट्रायल",
+		"no_plan": "कोई योजना नहीं",
+		"plan": "योजना",
+		"status": {
+			"active": "सक्रिय",
+			"suspended": "निलंबित"
+		},
+		"assign": "सौंपें"
+	}
+}

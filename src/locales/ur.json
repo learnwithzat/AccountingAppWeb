@@ -1,0 +1,122 @@
+{
+	"common": {
+		"loading": "لوڈ ہو رہا ہے...",
+		"create": "بنائیں",
+		"delete": "حذف کریں",
+		"edit": "ترمیم کریں",
+		"name": "نام",
+		"status": "حیثیت",
+		"created_at": "تخلیق کی تاریخ",
+		"actions": "اقدامات",
+		"delete_failed": "حذف کرنا ناکام رہا",
+		"na": "دستیاب نہیں",
+		"type": "قسم",
+		"status_active": "فعال",
+		"status_disabled": "معطل",
+		"toggle": "تبدیل کریں"
+	},
+	"menu": {
+		"dashboard": "ڈیش بورڈ",
+		"tenant": "ٹیننٹس",
+		"user": "صارفین",
+		"company": "کمپنیاں",
+		"role": "کردار",
+		"plan": "منصوبے",
+		"subscription": "سبسکرپشنز",
+		"membership": "رکنیت",
+		"audit-log": "آڈٹ لاگز"
+	},
+	"role": {
+		"title": "کردار اور اجازت کا میٹرکس",
+		"description": "AWS IAM طرز کا رسائی کنٹرول سسٹم",
+		"permission": "اجازت",
+		"update_failed": "اجازتیں اپ ڈیٹ کرنے میں ناکامی",
+		"label": "کردار",
+		"select": "کردار منتخب کریں",
+		"error_required": "کردار درکار ہے"
+	},
+	"tenant": {
+		"title": "ٹیننٹ مینجمنٹ",
+		"description": "تنظیموں، حیثیت اور رسائی کا نظم کریں",
+		"name": "ٹیننٹ کا نام",
+		"slug": "سلگ",
+		"search_placeholder": "ٹیننٹس تلاش کریں...",
+		"status": {
+			"all": "تمام",
+			"active": "فعال",
+			"suspended": "معطل",
+			"deleted": "حذف شدہ"
+		},
+		"no_data": "کوئی ٹیننٹ نہیں ملا",
+		"create_failed": "ٹیننٹ بنانے میں ناکامی",
+		"confirm_delete": "کیا آپ واقعی اس ٹیننٹ کو حذف کرنا چاہتے ہیں؟",
+		"label": "ٹیننٹ",
+		"workspace": "ورک اسپیس",
+		"active": "فعال ٹیننٹ",
+		"id_placeholder": "ٹیننٹ آئی ڈی"
+	},
+	"membership": {
+		"title": "رکنیت",
+		"load_failed": "رکنیت لوڈ کرنے میں ناکامی",
+		"no_data": "کوئی رکنیت نہیں ملی"
+	},
+	"dashboard": {
+		"title": "ڈیش بورڈ",
+		"stats": {
+			"users": "صارفین",
+			"companies": "کمپنیاں",
+			"branches": "شاخیں",
+			"roles": "کردار"
+		},
+		"sections": {
+			"subscription": "سبسکرپشن",
+			"access": "میری رسائی",
+			"activity": "حالیہ سرگرمی"
+		},
+		"activity": {
+			"none": "کوئی سرگرمی نہیں"
+		}
+	},
+	"company": {
+		"title": "کمپنی مینجمنٹ",
+		"name_placeholder": "کمپنی کا نام",
+		"label": "کمپنی",
+		"select": "کمپنی منتخب کریں"
+	},
+	"auth": {
+		"login": "لاگ ان",
+		"username": "صارف نام",
+		"password": "پاس ورڈ",
+		"error_required": "صارف نام اور پاس ورڈ درکار ہیں",
+		"error_invalid": "غلط اسناد",
+		"signing_in": "لاگ ان ہو رہا ہے...",
+		"login_button": "لاگ ان",
+		"no_account": "اکاؤنٹ نہیں ہے؟",
+		"create_account": "اکاؤنٹ بنائیں",
+		"register_title": "اکاؤنٹ بنائیں",
+		"register_description": "اپنا ورک اسپیس اور ایڈمن رسائی سیٹ اپ کریں",
+		"admin_user": "ایڈمن صارف",
+		"admin_account": "ایڈمن اکاؤنٹ",
+		"email": "ای میل",
+		"creating_account": "اکاؤنٹ بنایا جا رہا ہے...",
+		"user": "صارف"
+	},
+	"audit": {
+		"title": "آڈٹ لاگز",
+		"description": "اپنے سسٹم میں ہر عمل کو ٹریک کریں",
+		"search_placeholder": "لاگز تلاش کریں (عمل، ہستی...)",
+		"entity": "ہستی",
+		"ip": "آئی پی"
+	},
+	"subscription": {
+		"title": "سبسکرپشنز",
+		"trial": "ٹرائل",
+		"no_plan": "کوئی منصوبہ نہیں",
+		"plan": "منصوبہ",
+		"status": {
+			"active": "فعال",
+			"suspended": "معطل"
+		},
+		"assign": "تفویض کریں"
+	}
+}

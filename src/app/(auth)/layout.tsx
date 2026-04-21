@@ -8,20 +8,26 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
+
 const menu = [
-	{ name: 'Dashboard', path: '/dashboard', permission: null },
-	{ name: 'Tenants', path: '/tenant', permission: null },
-	{ name: 'Users', path: '/user', permission: null },
-	{ name: 'Companies', path: '/company', permission: null },
-	{ name: 'Roles', path: '/role', permission: null },
-	{ name: 'Plans', path: '/plan', permission: null },
+	{ name: 'Dashboard', path: '/dashboard', permission: 'dashboard.view' },
+	{
+		name: 'Expire Manager',
+		path: '/expire-manager',
+		permission: 'document.view',
+	},
+	{ name: 'Tenants', path: '/tenant', permission: 'tenant.view' },
+	{ name: 'Users', path: '/user', permission: 'user.view' },
+	{ name: 'Companies', path: '/company', permission: 'company.view' },
+	{ name: 'Roles', path: '/role', permission: 'role.view' },
+	{ name: 'Plans', path: '/plan', permission: 'plan.view' },
 	{
 		name: 'Subscriptions',
 		path: '/subscription',
-		permission: null,
+		permission: 'subscription.view',
 	},
-	{ name: 'Memberships', path: '/membership', permission: null },
-	{ name: 'Audit Logs', path: '/audit-log', permission: null },
+	{ name: 'Memberships', path: '/membership', permission: 'membership.view' },
+	{ name: 'Audit Logs', path: '/audit-log', permission: 'audit.view' },
 ];
 
 export default function AuthLayout({
@@ -59,12 +65,11 @@ export default function AuthLayout({
 	return (
 		<div style={{ display: 'flex', minHeight: '100vh' }}>
 			<Sidebar
-				menu={menu.map((item) => ({
-					...item,
-					name: t(`menu.${item.path.replace('/', '') || 'dashboard'}`),
+				menu={menu.map((m) => ({
+					...m,
+					name: t(`menu.${m.path.replace('/', '') || 'dashboard'}`),
 				}))}
 				permissions={permissions}
-				onLogout={logout}
 			/>
 
 			<main
@@ -76,9 +81,10 @@ export default function AuthLayout({
 					flexDirection: 'column',
 					gap: 20,
 				}}>
-				<div style={{ display: 'flex', justifyContent: 'inline-end' }}>
+				<div style={{ display: 'flex', justifyContent: 'flex-end' }}>
 					<LanguageSwitcher />
 				</div>
+
 				{children}
 			</main>
 		</div>

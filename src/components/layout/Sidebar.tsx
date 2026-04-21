@@ -13,27 +13,29 @@ export default function Sidebar({ menu, permissions }: any) {
 	const { user, tenant, role, logout: ctxLogout } = useAuth();
 
 	//////////////////////////////////////////////////////
-	// SAFE PERMISSIONS
+	// SAFE PERMISSIONS (FIXED)
 	//////////////////////////////////////////////////////
-	const safePermissions = permissions ?? [];
+	const safePermissions = Array.isArray(permissions) ? permissions : [];
 
 	//////////////////////////////////////////////////////
-	// FILTER MENU
+	// FILTER MENU (RBAC CORE)
 	//////////////////////////////////////////////////////
-	const filtered = menu.filter((m: any) =>
-		!m.permission ? true : safePermissions.includes(m.permission)
-	);
+	const filteredMenu = menu.filter((item: any) => {
+		// no permission required → always show
+		if (!item.permission) return true;
+
+		// super admin bypass (optional)
+		if (safePermissions.includes('all')) return true;
+
+		return safePermissions.includes(item.permission);
+	});
 
 	//////////////////////////////////////////////////////
-	// LOGOUT (CLEAN + STATE RESET)
+	// LOGOUT
 	//////////////////////////////////////////////////////
 	const logout = () => {
 		AuthService.logout();
-
-		// reset context safely first
-		if (ctxLogout) ctxLogout();
-
-		// full reset app
+		ctxLogout?.();
 		router.replace('/login');
 	};
 
@@ -59,7 +61,6 @@ export default function Sidebar({ menu, permissions }: any) {
 			<div style={{ marginBottom: 20 }}>
 				<h2>SaaS ERP</h2>
 
-				{/* TENANT INFO */}
 				<div style={{ fontSize: 12, color: '#94a3b8', marginTop: 6 }}>
 					<div>{tenant?.name || 'No Tenant'}</div>
 					<div>{role?.name || 'No Role'}</div>
@@ -68,7 +69,7 @@ export default function Sidebar({ menu, permissions }: any) {
 
 			{/* NAV */}
 			<nav style={{ flex: 1 }}>
-				{filtered.map((item: any) => (
+				{filteredMenu.map((item: any) => (
 					<Link
 						key={item.path}
 						href={item.path}
@@ -88,7 +89,7 @@ export default function Sidebar({ menu, permissions }: any) {
 				))}
 			</nav>
 
-			{/* FOOTER */}
+			{/* USER */}
 			<div style={{ marginTop: 10, fontSize: 12, color: '#94a3b8' }}>
 				{user?.name}
 			</div>

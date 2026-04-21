@@ -4,17 +4,16 @@
 
 import { useEffect, useState } from 'react';
 import { UserService } from '@/services/user.service';
-import { TenantService } from '@/services/tenant.service';
 import { RoleService } from '@/services/role.service';
-
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/components/providers/AuthProvider';
 
 export default function UserPage() {
-	const [users, setUsers] = useState<any[]>([]);
-	const [tenants, setTenants] = useState<any[]>([]);
-	const [roles, setRoles] = useState<any[]>([]);
+	const { activeTenantId } = useAuth();
 
+	const [users, setUsers] = useState<any[]>([]);
+	const [roles, setRoles] = useState<any[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [search, setSearch] = useState('');
 
@@ -23,58 +22,78 @@ export default function UserPage() {
 		email: '',
 		username: '',
 		password: '',
-		tenantId: '',
 		roleId: '',
 	});
 
 	//////////////////////////////////////////////////////
-	// LOAD DATA
+	// LOAD USERS
 	//////////////////////////////////////////////////////
-	const load = async () => {
+	const loadUsers = async () => {
+		if (!activeTenantId) return;
+
 		try {
-			setLoading(true);
-
-			const [u, t, r] = await Promise.all([
-				UserService.getAll(),
-				TenantService.getAll(),
-				RoleService.getAll(),
-			]);
-
-			setUsers(u?.data || []);
-			setTenants(t?.data || []);
-			setRoles(r?.data || []);
+			const res = await UserService.getAll(activeTenantId);
+			setUsers(res?.data || res);
 		} catch (err) {
 			console.error(err);
-		} finally {
-			setLoading(false);
 		}
 	};
 
-	useEffect(() => {
-		load();
-	}, []);
+	//////////////////////////////////////////////////////
+	// LOAD ROLES
+	//////////////////////////////////////////////////////
+	const loadRoles = async () => {
+		if (!activeTenantId) return;
+
+		try {
+			const res = await RoleService.getAll(activeTenantId);
+			setRoles(res?.data || res);
+		} catch (err) {
+			console.error(err);
+		}
+	};
 
 	//////////////////////////////////////////////////////
-	// CREATE USER WITH MEMBERSHIP
+	// INIT
+	//////////////////////////////////////////////////////
+	useEffect(() => {
+		if (!activeTenantId) return;
+
+		const init = async () => {
+			setLoading(true);
+			await Promise.all([loadUsers(), loadRoles()]);
+			setLoading(false);
+		};
+
+		init();
+	}, [activeTenantId]);
+
+	//////////////////////////////////////////////////////
+	// CREATE USER
 	//////////////////////////////////////////////////////
 	const create = async () => {
-		if (!form.tenantId || !form.roleId) {
-			alert('Tenant & Role required');
+		if (!form.roleId) {
+			alert('Role required');
 			return;
 		}
 
-		await UserService.create(form);
+		await UserService.create(
+			{
+				...form,
+				tenantId: activeTenantId,
+			},
+			activeTenantId,
+		);
 
 		setForm({
 			name: '',
 			email: '',
 			username: '',
 			password: '',
-			tenantId: '',
 			roleId: '',
 		});
 
-		load();
+		await loadUsers();
 	};
 
 	//////////////////////////////////////////////////////
@@ -83,25 +102,23 @@ export default function UserPage() {
 	const filtered = users.filter(
 		(u) =>
 			u.name?.toLowerCase().includes(search.toLowerCase()) ||
-			u.email?.toLowerCase().includes(search.toLowerCase())
+			u.email?.toLowerCase().includes(search.toLowerCase()),
 	);
 
 	//////////////////////////////////////////////////////
-	// UI
+	// UI (UNCHANGED)
 	//////////////////////////////////////////////////////
 	return (
 		<div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 			{/* HEADER */}
 			<div>
-				<h1 style={{ fontSize: 24, fontWeight: 700 }}>
-					User Management (Enterprise)
-				</h1>
+				<h1 style={{ fontSize: 24, fontWeight: 700 }}>User Management</h1>
 				<p style={{ color: '#64748b' }}>
-					Users → Membership → Tenant → Role
+					Active Tenant: {activeTenantId}
 				</p>
 			</div>
 
-			{/* CREATE */}
+			{/* CREATE USER */}
 			<div
 				style={{
 					background: '#fff',
@@ -114,40 +131,36 @@ export default function UserPage() {
 				<Input
 					placeholder='Name'
 					value={form.name}
-					onChange={(e) => setForm({ ...form, name: e.target.value })}
+					onChange={(e) =>
+						setForm({ ...form, name: e.target.value })
+					}
 				/>
+
 				<Input
 					placeholder='Email'
 					value={form.email}
-					onChange={(e) => setForm({ ...form, email: e.target.value })}
+					onChange={(e) =>
+						setForm({ ...form, email: e.target.value })
+					}
 				/>
+
 				<Input
 					placeholder='Username'
 					value={form.username}
-					onChange={(e) => setForm({ ...form, username: e.target.value })}
+					onChange={(e) =>
+						setForm({ ...form, username: e.target.value })
+					}
 				/>
+
 				<Input
 					type='password'
 					placeholder='Password'
 					value={form.password}
-					onChange={(e) => setForm({ ...form, password: e.target.value })}
+					onChange={(e) =>
+						setForm({ ...form, password: e.target.value })
+					}
 				/>
 
-				{/* TENANT SELECT */}
-				<select
-					value={form.tenantId}
-					onChange={(e) =>
-						setForm({ ...form, tenantId: e.target.value })
-					}>
-					<option value=''>Select Tenant</option>
-					{tenants.map((t) => (
-						<option key={t.id} value={t.id}>
-							{t.name}
-						</option>
-					))}
-				</select>
-
-				{/* ROLE SELECT */}
 				<select
 					value={form.roleId}
 					onChange={(e) =>
@@ -184,7 +197,7 @@ export default function UserPage() {
 					<div>Name</div>
 					<div>Email</div>
 					<div>Username</div>
-					<div>Tenant / Role</div>
+					<div>Role</div>
 					<div>Status</div>
 					<div>Actions</div>
 				</div>
@@ -193,25 +206,24 @@ export default function UserPage() {
 					<div style={{ padding: 20 }}>Loading...</div>
 				) : (
 					filtered.map((u) => {
-						const m = u.memberships?.[0];
+						const m = u.memberships?.find(
+							(x: any) => x.tenantId === activeTenantId,
+						);
 
 						return (
 							<div
 								key={u.id}
 								style={{
 									display: 'grid',
-									gridTemplateColumns: '2fr 2fr 2fr 2fr 1fr 1fr',
+									gridTemplateColumns:
+										'2fr 2fr 2fr 2fr 1fr 1fr',
 									padding: 12,
 									borderTop: '1px solid #eee',
 								}}>
 								<div>{u.name}</div>
 								<div>{u.email}</div>
 								<div>{u.username}</div>
-
-								<div>
-									{m?.tenant?.name || 'N/A'} <br />
-									<small>{m?.role?.name}</small>
-								</div>
+								<div>{m?.role?.name || 'N/A'}</div>
 
 								<div>
 									<span
@@ -223,23 +235,32 @@ export default function UserPage() {
 												? '#dcfce7'
 												: '#fee2e2',
 										}}>
-										{u.isActive ? 'ACTIVE' : 'DISABLED'}
+										{u.isActive
+											? 'ACTIVE'
+											: 'DISABLED'}
 									</span>
 								</div>
 
 								<div style={{ display: 'flex', gap: 6 }}>
 									<Button
 										onClick={() =>
-											UserService.update(u.id, {
-												isActive: !u.isActive,
-											}).then(load)
+											UserService.update(
+												u.id,
+												{
+													isActive: !u.isActive,
+												},
+												activeTenantId,
+											).then(loadUsers)
 										}>
 										Toggle
 									</Button>
 
 									<Button
 										onClick={() =>
-											UserService.remove(u.id).then(load)
+											UserService.remove(
+												u.id,
+												activeTenantId,
+											).then(loadUsers)
 										}
 										style={{ background: 'red' }}>
 										Delete

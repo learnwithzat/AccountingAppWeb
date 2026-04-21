@@ -3,23 +3,63 @@
 import { api } from '@/lib/api';
 
 export const UserService = {
-	async getAll() {
-		return api.get('/users');
-	},
+	//////////////////////////////////////////////////////
+	// GET USERS (TENANT SCOPED)
+	//////////////////////////////////////////////////////
+	getAll: (tenantId?: string | null) =>
+		api.get('/users', {
+			headers: tenantId ? { 'x-tenant-id': tenantId } : undefined,
+		}),
 
-	async create(data: any) {
-		return api.post('/users', data);
-	},
+	//////////////////////////////////////////////////////
+	// GET SINGLE USER
+	//////////////////////////////////////////////////////
+	getOne: (id: string, tenantId?: string) =>
+		api.get(`/users/${id}`, {
+			headers: tenantId ? { 'x-tenant-id': tenantId } : undefined,
+		}),
 
-	async update(id: string, data: any) {
-		return api.patch(`/users/${id}`, data);
-	},
+	//////////////////////////////////////////////////////
+	// CREATE USER (IN CURRENT TENANT)
+	//////////////////////////////////////////////////////
+	create: (data: any, tenantId?: string) =>
+		api.post('/users', data, {
+			headers: tenantId ? { 'x-tenant-id': tenantId } : undefined,
+		}),
 
-	async remove(id: string) {
-		return api.delete(`/users/${id}`);
-	},
+	//////////////////////////////////////////////////////
+	// UPDATE USER
+	//////////////////////////////////////////////////////
+	update: (id: string, data: any, tenantId?: string) =>
+		api.patch(`/users/${id}`, data, {
+			headers: tenantId ? { 'x-tenant-id': tenantId } : undefined,
+		}),
 
-	async assignRole(data: { userId: string; tenantId: string; roleId: string }) {
-		return api.post('/users/assign-role', data);
-	},
+	//////////////////////////////////////////////////////
+	// DELETE USER
+	//////////////////////////////////////////////////////
+	remove: (id: string, tenantId?: string) =>
+		api.delete(`/users/${id}`, {
+			headers: tenantId ? { 'x-tenant-id': tenantId } : undefined,
+		}),
+
+	//////////////////////////////////////////////////////
+	// ROLE ASSIGNMENT (TENANT-SAFE)
+	//////////////////////////////////////////////////////
+	assignRole: (data: { userId: string; roleId: string; tenantId?: string }) =>
+		api.post('/users/assign-role', data, {
+			headers: data.tenantId ? { 'x-tenant-id': data.tenantId } : undefined,
+		}),
+
+	//////////////////////////////////////////////////////
+	// USER STATUS CONTROL (OPTIONAL SaaS FEATURE)
+	//////////////////////////////////////////////////////
+	toggleStatus: (id: string, tenantId?: string) =>
+		api.patch(
+			`/users/${id}/toggle-status`,
+			{},
+			{
+				headers: tenantId ? { 'x-tenant-id': tenantId } : undefined,
+			},
+		),
 };

@@ -4,7 +4,7 @@ import { api } from '@/lib/api';
 
 export const AuthService = {
 	//////////////////////////////////////////////////////
-	// SETUP (FIRST TIME TENANT + USER)
+	// SETUP (FIRST TIME)
 	//////////////////////////////////////////////////////
 	async setup(data: {
 		name: string;
@@ -18,9 +18,7 @@ export const AuthService = {
 
 		if (!res?.access_token) throw new Error('Setup failed');
 
-		// store auth context
-		localStorage.setItem('token', res.access_token);
-		localStorage.setItem('tenantId', res.tenant.id);
+		this.setSession(res);
 
 		return res;
 	},
@@ -29,38 +27,30 @@ export const AuthService = {
 	// LOGIN
 	//////////////////////////////////////////////////////
 	async login(username: string, password: string) {
-		const { data: res } = await api.post('/auth/login', {
-			username,
-			password,
-		});
+		const { data: res } = await api.post('/auth/login', { username, password });
 
 		if (!res?.access_token) throw new Error('Login failed');
 
-		localStorage.setItem('token', res.access_token);
-		localStorage.setItem('tenantId', res.tenant.id);
+		this.setSession(res);
 
 		return res;
 	},
 
 	//////////////////////////////////////////////////////
-	// ME (SAFE - NO 401 CRASH)
+	// ME (SAFE)
 	//////////////////////////////////////////////////////
 	async me() {
 		const token = this.getToken();
-
-		// ❗ prevent unnecessary API call
 		if (!token) return null;
 
 		try {
 			const { data } = await api.get('/auth/me');
 			return data;
 		} catch (err: any) {
-			// ✅ if unauthorized → clean logout state safely
 			if (err?.response?.status === 401) {
 				this.logout();
 				return null;
 			}
-
 			throw err;
 		}
 	},
@@ -74,11 +64,27 @@ export const AuthService = {
 	},
 
 	//////////////////////////////////////////////////////
-	// LOGOUT (FULL CLEAN RESET)
+	// SESSION HANDLING (NEW IMPROVEMENT)
+	//////////////////////////////////////////////////////
+	setSession(res: any) {
+		if (typeof window === 'undefined') return;
+
+		localStorage.setItem('token', res.access_token);
+
+		// store ONLY initial tenant (not authority)
+		if (res?.tenant?.id) {
+			localStorage.setItem('activeTenantId', res.tenant.id);
+		}
+	},
+
+	//////////////////////////////////////////////////////
+	// LOGOUT
 	//////////////////////////////////////////////////////
 	logout() {
+		if (typeof window === 'undefined') return;
+
 		localStorage.removeItem('token');
-		localStorage.removeItem('tenantId');
+		localStorage.removeItem('activeTenantId');
 	},
 
 	//////////////////////////////////////////////////////
@@ -90,15 +96,28 @@ export const AuthService = {
 	},
 
 	//////////////////////////////////////////////////////
-	// TENANT HANDLING
+	// TENANT (SAFE CACHE ONLY)
 	//////////////////////////////////////////////////////
 	setTenant(tenantId: string) {
 		if (!tenantId) return;
-		localStorage.setItem('tenantId', tenantId);
+		if (typeof window === 'undefined') return;
+
+		localStorage.setItem('activeTenantId', tenantId);
 	},
 
 	getTenant() {
 		if (typeof window === 'undefined') return null;
-		return localStorage.getItem('tenantId');
+		return localStorage.getItem('activeTenantId');
+	},
+
+	//////////////////////////////////////////////////////
+	// SWITCH TENANT (NEW IMPORTANT FEATURE)
+	//////////////////////////////////////////////////////
+	async switchTenant(tenantId: string) {
+		// optional backend call if needed
+		// await api.post('/auth/switch-tenant', { tenantId });
+
+		this.setTenant(tenantId);
+		return tenantId;
 	},
 };

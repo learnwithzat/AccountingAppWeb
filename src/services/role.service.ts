@@ -4,30 +4,47 @@ import { api } from '@/lib/api';
 
 export const RoleService = {
 	//////////////////////////////////////////////////////
-	// ROLES
+	// ROLES (TENANT SCOPED)
 	//////////////////////////////////////////////////////
-	getAll: () => api.get('/role'),
-
-	getOne: (id: string) => api.get(`/role/${id}`),
-
-	create: (data: any) => api.post('/role', data),
-
-	//////////////////////////////////////////////////////
-	// FIXED: backend uses PATCH, not PUT
-	//////////////////////////////////////////////////////
-	update: (id: string, data: any) => api.patch(`/role/${id}`, data),
-
-	remove: (id: string) => api.delete(`/role/${id}`),
-
-	//////////////////////////////////////////////////////
-	// IAM STYLE PERMISSION ASSIGNMENT
-	//////////////////////////////////////////////////////
-	assignPermissions: (id: string, permissionIds: string[]) =>
-		api.post(`/role/${id}/permissions`, {
-			permissionIds,
+	getAll: (tenantId?: string) =>
+		api.get('/role', {
+			headers: tenantId ? { 'x-tenant-id': tenantId } : undefined,
 		}),
+
+	getOne: (id: string, tenantId?: string) =>
+		api.get(`/role/${id}`, {
+			headers: tenantId ? { 'x-tenant-id': tenantId } : undefined,
+		}),
+
+	create: (data: any, tenantId?: string) =>
+		api.post('/role', data, {
+			headers: tenantId ? { 'x-tenant-id': tenantId } : undefined,
+		}),
+
+	update: (id: string, data: any, tenantId?: string) =>
+		api.patch(`/role/${id}`, data, {
+			headers: tenantId ? { 'x-tenant-id': tenantId } : undefined,
+		}),
+
+	remove: (id: string, tenantId?: string) =>
+		api.delete(`/role/${id}`, {
+			headers: tenantId ? { 'x-tenant-id': tenantId } : undefined,
+		}),
+
 	//////////////////////////////////////////////////////
-	// PERMISSIONS (FIX MISSING FUNCTION)
+	// PERMISSIONS ASSIGNMENT (TENANT SAFE)
+	//////////////////////////////////////////////////////
+	assignPermissions: (id: string, permissionIds: string[], tenantId?: string) =>
+		api.post(
+			`/role/${id}/permissions`,
+			{ permissionIds },
+			{
+				headers: tenantId ? { 'x-tenant-id': tenantId } : undefined,
+			},
+		),
+
+	//////////////////////////////////////////////////////
+	// SYSTEM PERMISSIONS (GLOBAL IAM)
 	//////////////////////////////////////////////////////
 	getPermissions: () => api.get('/permission'),
 };

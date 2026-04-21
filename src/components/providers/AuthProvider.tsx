@@ -2,17 +2,19 @@
 
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { AuthService } from '@/services/auth.service';
-import { TenantService } from '@/services/tenant.service';
 
 type AuthContextType = {
 	user: any;
 	tenant: any;
 	role: any;
+	memberships: any[];
 	permissions: string[];
+	activeTenantId?: string;
 	loading: boolean;
 	isAuthenticated: boolean;
+	switchTenant: (tenantId: string) => Promise<void>;
 	logout: () => void;
 	refreshAuth: () => Promise<void>;
 };
@@ -23,29 +25,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 	const [user, setUser] = useState<any>(null);
 	const [tenant, setTenant] = useState<any>(null);
 	const [role, setRole] = useState<any>(null);
+	const [memberships, setMemberships] = useState<any[]>([]);
 	const [permissions, setPermissions] = useState<string[]>([]);
+	const [activeTenantId, setActiveTenantId] = useState<string | undefined>(
+		undefined,
+	);
 	const [loading, setLoading] = useState(true);
+
+	const mountedRef = useRef(true);
 
 	//////////////////////////////////////////////////////
 	// LOGOUT
 	//////////////////////////////////////////////////////
 	const logout = () => {
 		AuthService.logout();
+
 		setUser(null);
 		setTenant(null);
 		setRole(null);
+		setMemberships([]);
 		setPermissions([]);
+		setActiveTenantId(undefined);
 	};
 
 	//////////////////////////////////////////////////////
-	// REFRESH AUTH (USED AFTER LOGIN / TENANT SWITCH)
+	// SWITCH TENANT
 	//////////////////////////////////////////////////////
-	const refreshAuth = async () => {
-		await initAuth();
+	const switchTenant = async (tenantId: string) => {
+		if (!user) return;
+
+		const membership = memberships.find((m: any) => m?.tenant?.id === tenantId);
+
+		if (!membership) {
+			console.warn('Tenant not found:', tenantId);
+			return;
+		}
+
+		const tenantData = membership.tenant;
+		const roleData = membership.role;
+
+		setTenant(tenantData);
+		setRole(roleData);
+		setActiveTenantId(tenantId);
+
+		const perms =
+			roleData?.permissions?.map((p: any) => p.permission.key) || [];
+
+		setPermissions(perms);
+
+		AuthService.setTenant(tenantId);
 	};
 
 	//////////////////////////////////////////////////////
-	// INIT AUTH CORE LOGIC
+	// INIT AUTH
 	//////////////////////////////////////////////////////
 	const initAuth = async () => {
 		try {
@@ -58,22 +90,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 				return;
 			}
 
-			//////////////////////////////////////////////////////
-			// 1. LOAD USER
-			//////////////////////////////////////////////////////
 			const userData = await AuthService.me();
+			if (!mountedRef.current) return;
 
 			if (!userData) {
 				logout();
 				return;
 			}
 
-			//////////////////////////////////////////////////////
-			// 2. ACTIVE MEMBERSHIP
-			//////////////////////////////////////////////////////
+			const allMemberships = userData.memberships || [];
+			setMemberships(allMemberships);
+
+			const savedTenant = AuthService.getTenant?.();
+
 			const membership =
-				userData.memberships?.find((m: any) => m.isActive) ||
-				userData.memberships?.[0];
+				allMemberships.find(
+					(m: { tenant?: { id?: string } }) => m?.tenant?.id === savedTenant,
+				) ?? allMemberships[0];
 
 			if (!membership) {
 				logout();
@@ -83,40 +116,95 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 			const tenantData = membership.tenant;
 			const roleData = membership.role;
 
-			AuthService.setTenant(tenantData.id);
-
-			//////////////////////////////////////////////////////
-			// 3. LOAD PERMISSIONS (FROM ROLE)
-			//////////////////////////////////////////////////////
-			const perms =
-				roleData?.permissions?.map((p: any) => p.permission.key) || [];
-
-			//////////////////////////////////////////////////////
-			// 4. SET STATE
-			//////////////////////////////////////////////////////
 			setUser(userData);
 			setTenant(tenantData);
 			setRole(roleData);
+			setActiveTenantId(tenantData.id);
+
+			const perms =
+				roleData?.permissions?.map((p: any) => p.permission.key) || [];
+
 			setPermissions(perms);
+
+			AuthService.setTenant(tenantData.id);
 		} catch (err) {
 			console.error('AUTH ERROR:', err);
 			logout();
 		} finally {
-			setLoading(false);
+			if (mountedRef.current) setLoading(false);
 		}
 	};
 
 	//////////////////////////////////////////////////////
-	// INIT ON MOUNT
+	// REFRESH
+	//////////////////////////////////////////////////////
+	const refreshAuth = async () => {
+		await initAuth();
+	};
+
+	//////////////////////////////////////////////////////
+	// INIT
 	//////////////////////////////////////////////////////
 	useEffect(() => {
+		if (!activeTenantId && activeTenantId !== undefined) return;
+
 		let mounted = true;
 
-		(async () => {
-			if (mounted) {
-				await initAuth();
+		const run = async () => {
+			try {
+				setLoading(true);
+
+				const token = AuthService.getToken();
+				if (!token) {
+					if (mounted) logout();
+					return;
+				}
+
+				const userData = await AuthService.me();
+				if (!mounted) return;
+
+				if (!userData) {
+					if (mounted) logout();
+					return;
+				}
+
+				const allMemberships = userData.memberships || [];
+				setMemberships(allMemberships);
+
+				const savedTenant = AuthService.getTenant?.();
+
+				let membership =
+					allMemberships.find((m: any) => m?.tenant?.id === savedTenant) ||
+					allMemberships[0];
+
+				if (!membership) {
+					if (mounted) logout();
+					return;
+				}
+
+				const tenantData = membership.tenant;
+				const roleData = membership.role;
+
+				setUser(userData);
+				setTenant(tenantData);
+				setRole(roleData);
+				setActiveTenantId(tenantData.id);
+
+				const perms =
+					roleData?.permissions?.map((p: any) => p.permission.key) || [];
+
+				setPermissions(perms);
+
+				AuthService.setTenant(tenantData.id);
+			} catch (err) {
+				console.error('AUTH ERROR:', err);
+				if (mounted) logout();
+			} finally {
+				if (mounted) setLoading(false);
 			}
-		})();
+		};
+
+		run();
 
 		return () => {
 			mounted = false;
@@ -129,9 +217,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 				user,
 				tenant,
 				role,
+				memberships,
 				permissions,
+				activeTenantId,
 				loading,
 				isAuthenticated: !!user,
+				switchTenant,
 				logout,
 				refreshAuth,
 			}}>

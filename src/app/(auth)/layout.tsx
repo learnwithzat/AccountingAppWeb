@@ -13,7 +13,7 @@ const menu = [
 	{ name: 'Dashboard', path: '/dashboard', permission: null },
 	{
 		name: 'Expire Manager',
-		path: '/expire-manager',
+		path: '/expiremanage',
 		permission: null,
 	},
 	{ name: 'Tenants', path: '/tenant', permission: 'tenant.view' },

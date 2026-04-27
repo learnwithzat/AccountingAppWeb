@@ -5,6 +5,18 @@
 import { useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
+import {
+	LayoutDashboard,
+	FileClock,
+	Building2,
+	Users,
+	Building,
+	ShieldCheck,
+	Layers,
+	CreditCard,
+	UsersRound,
+	ListChecks,
+} from 'lucide-react';
 
 import Sidebar from '@/components/layout/Sidebar';
 import { useAuth } from '@/components/providers/AuthProvider';
@@ -14,21 +26,22 @@ export type MenuItem = {
 	label: string;
 	path: string;
 	permission?: string;
+	icon?: React.ComponentType<{ className?: string }>;
 };
 
 type MenuBaseItem = Omit<MenuItem, 'label'> & { fallbackLabel?: string };
 
 const BASE_MENU: MenuBaseItem[] = [
-	{ path: '/dashboard', fallbackLabel: 'DashBoard' },
-	{ path: '/expiremanage', fallbackLabel: 'Expire Manager' },
-	{ path: '/tenant', permission: 'tenant.view' },
-	{ path: '/user', permission: 'user.view' },
-	{ path: '/company', permission: 'company.view' },
-	{ path: '/role', permission: 'role.view' },
-	{ path: '/plan', permission: 'plan.view' },
-	{ path: '/subscription', permission: 'subscription.view' },
-	{ path: '/membership', permission: 'membership.view' },
-	{ path: '/audit-log', permission: 'audit.view' },
+	{ path: '/dashboard', fallbackLabel: 'DashBoard', icon: LayoutDashboard },
+	{ path: '/expiremanage', fallbackLabel: 'Expire Manager', icon: FileClock },
+	{ path: '/tenant', permission: 'tenant.view', icon: Building2 },
+	{ path: '/user', permission: 'user.view', icon: Users },
+	{ path: '/company', permission: 'company.view', icon: Building },
+	{ path: '/role', permission: 'role.view', icon: ShieldCheck },
+	{ path: '/plan', permission: 'plan.view', icon: Layers },
+	{ path: '/subscription', permission: 'subscription.view', icon: CreditCard },
+	{ path: '/membership', permission: 'membership.view', icon: UsersRound },
+	{ path: '/audit-log', permission: 'audit.view', icon: ListChecks },
 ];
 
 /** Derives the i18n key from a route path.

@@ -18,7 +18,7 @@ import { SearchIcon } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function ExpireManagerPage() {
-	const { docs, loading, error, refetch } = useDocuments();
+	const { docs, loading, error } = useDocuments();
 
 	const [search, setSearch] = useState('');
 	const [range, setRange] = useState(30);
@@ -62,17 +62,7 @@ export default function ExpireManagerPage() {
 			<div className='p-6 text-sm text-gray-500'>Loading documents...</div>
 		);
 
-	if (error)
-		return (
-			<div className='p-6 text-red-500 text-sm'>
-				{error}
-				<button
-					className='ml-2 underline'
-					onClick={refetch}>
-					Retry
-				</button>
-			</div>
-		);
+	if (error) return <div className='p-6 text-red-500 text-sm'>{error}</div>;
 
 	const visibleDocs = categorized[tab];
 

@@ -1,10 +1,28 @@
 /** @format */
 
-export function StatCard({ label, value }: { label: string; value: number }) {
+import { Card, CardContent } from '@/components/ui/card';
+import { LucideIcon } from 'lucide-react';
+
+export function StatCard({
+	label,
+	value,
+	icon: Icon,
+}: {
+	label: string;
+	value: number;
+	icon: LucideIcon;
+}) {
 	return (
-		<div className='p-4 border rounded-lg'>
-			<div className='text-xs text-gray-500'>{label}</div>
-			<div className='text-2xl font-semibold'>{value}</div>
-		</div>
+		<Card size='sm'>
+			<CardContent className='flex items-center gap-4'>
+				<div className='flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary'>
+					<Icon className='h-5 w-5' />
+				</div>
+				<div>
+					<p className='text-xs font-medium text-muted-foreground'>{label}</p>
+					<p className='text-2xl font-bold'>{value}</p>
+				</div>
+			</CardContent>
+		</Card>
 	);
 }

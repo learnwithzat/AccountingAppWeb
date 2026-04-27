@@ -14,7 +14,7 @@ import {
 	InputGroupAddon,
 	InputGroupInput,
 } from '@/components/ui/input-group';
-import { SearchIcon } from 'lucide-react';
+import { AlertCircle, CheckCircle, Clock, SearchIcon } from 'lucide-react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function ExpireManagerPage() {
@@ -98,14 +98,17 @@ export default function ExpireManagerPage() {
 				<StatCard
 					label='Expired'
 					value={categorized.expired.length}
+					icon={AlertCircle}
 				/>
 				<StatCard
 					label='Soon'
 					value={categorized.soon.length}
+					icon={Clock}
 				/>
 				<StatCard
 					label='Active'
 					value={categorized.active.length}
+					icon={CheckCircle}
 				/>
 			</div>
 

@@ -1,7 +1,6 @@
 /** @format */
 
-import { AuthProvider } from '@/components/providers/AuthProvider';
-import './globals.css';
+import type { Metadata } from 'next';
 import {
 	Inter,
 	IBM_Plex_Sans_Arabic,
@@ -9,11 +8,17 @@ import {
 	Noto_Sans_Malayalam,
 	Noto_Nastaliq_Urdu,
 } from 'next/font/google';
+
+import { AuthProvider } from '@/components/providers/AuthProvider';
 import I18nProvider from '@/components/providers/I18nProvider';
+import './globals.css';
+
+// ── Fonts ─────────────────────────────────────────────────────────────────────
 
 const inter = Inter({
 	subsets: ['latin'],
 	variable: '--font-inter',
+	display: 'swap',
 });
 
 const ibmPlexArabic = IBM_Plex_Sans_Arabic({
@@ -23,23 +28,41 @@ const ibmPlexArabic = IBM_Plex_Sans_Arabic({
 	display: 'swap',
 });
 
-const hindiFont = Noto_Sans_Devanagari({
+const notoDevanagari = Noto_Sans_Devanagari({
 	subsets: ['devanagari'],
 	variable: '--font-hindi',
 	display: 'swap',
 });
 
-const malayalamFont = Noto_Sans_Malayalam({
+const notoMalayalam = Noto_Sans_Malayalam({
 	subsets: ['malayalam'],
 	variable: '--font-malayalam',
 	display: 'swap',
 });
 
-const urduFont = Noto_Nastaliq_Urdu({
+const notoNastaliqUrdu = Noto_Nastaliq_Urdu({
 	weight: ['400', '700'],
 	variable: '--font-urdu',
 	display: 'swap',
 });
+
+// Collect all variable class names once so the JSX stays readable.
+const fontVariables = [
+	inter.variable,
+	ibmPlexArabic.variable,
+	notoDevanagari.variable,
+	notoMalayalam.variable,
+	notoNastaliqUrdu.variable,
+].join(' ');
+
+// ── Metadata ──────────────────────────────────────────────────────────────────
+
+export const metadata: Metadata = {
+	title: 'SaaS ERP',
+	description: 'Multi-tenant SaaS ERP platform',
+};
+
+// ── Layout ────────────────────────────────────────────────────────────────────
 
 export default function RootLayout({
 	children,
@@ -47,15 +70,19 @@ export default function RootLayout({
 	children: React.ReactNode;
 }) {
 	return (
+		// lang/dir are set at runtime by LanguageSwitcher; suppress the mismatch
+		// warning that arises from SSR defaulting to 'en'/'ltr'.
 		<html
+			lang='en'
+			dir='ltr'
 			suppressHydrationWarning
-			className={`${inter.variable} ${ibmPlexArabic.variable} ${hindiFont.variable} ${malayalamFont.variable} ${urduFont.variable}`}>
-			<body
-				style={{
-					fontFamily:
-						'var(--font-inter), var(--font-arabic), var(--font-hindi), var(--font-malayalam), var(--font-urdu), sans-serif',
-					lineHeight: '1.6', // Improved default for Arabic legibility
-				}}>
+			className={fontVariables}>
+			{/*
+			 * Font stack: script-specific fonts listed before the Latin fallback so
+			 * each script's own font wins over Inter for its Unicode range.
+			 * line-height of 1.7 aids legibility for Arabic and Nastaliq scripts.
+			 */}
+			<body className='font-[var(--font-urdu),var(--font-arabic),var(--font-hindi),var(--font-malayalam),var(--font-inter),sans-serif] leading-[1.7]'>
 				<AuthProvider>
 					<I18nProvider>{children}</I18nProvider>
 				</AuthProvider>

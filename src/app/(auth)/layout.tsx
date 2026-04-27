@@ -2,86 +2,98 @@
 
 'use client';
 
+import { useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
+
 import Sidebar from '@/components/layout/Sidebar';
 import { useAuth } from '@/components/providers/AuthProvider';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
-const menu = [
-	{ name: 'Dashboard', path: '/dashboard', permission: null },
-	{
-		name: 'Expire Manager',
-		path: '/expiremanage',
-		permission: null,
-	},
-	{ name: 'Tenants', path: '/tenant', permission: 'tenant.view' },
-	{ name: 'Users', path: '/user', permission: 'user.view' },
-	{ name: 'Companies', path: '/company', permission: 'company.view' },
-	{ name: 'Roles', path: '/role', permission: 'role.view' },
-	{ name: 'Plans', path: '/plan', permission: 'plan.view' },
-	{
-		name: 'Subscriptions',
-		path: '/subscription',
-		permission: 'subscription.view',
-	},
-	{ name: 'Memberships', path: '/membership', permission: 'membership.view' },
-	{ name: 'Audit Logs', path: '/audit-log', permission: 'audit.view' },
+export type MenuItem = {
+	label: string;
+	path: string;
+	permission?: string;
+};
+
+type MenuBaseItem = Omit<MenuItem, 'label'> & { fallbackLabel?: string };
+
+const BASE_MENU: MenuBaseItem[] = [
+	{ path: '/dashboard', fallbackLabel: 'DashBoard' },
+	{ path: '/expiremanage', fallbackLabel: 'Expire Manager' },
+	{ path: '/tenant', permission: 'tenant.view' },
+	{ path: '/user', permission: 'user.view' },
+	{ path: '/company', permission: 'company.view' },
+	{ path: '/role', permission: 'role.view' },
+	{ path: '/plan', permission: 'plan.view' },
+	{ path: '/subscription', permission: 'subscription.view' },
+	{ path: '/membership', permission: 'membership.view' },
+	{ path: '/audit-log', permission: 'audit.view' },
 ];
+
+/** Derives the i18n key from a route path.
+ *  '/audit-log' → 'menu.audit-log'
+ *  '/'          → 'menu.dashboard'
+ */
+function menuKey(path: string): string {
+	const segment = path.replace(/^\//, '') || 'dashboard';
+	return `menu.${segment}`;
+}
 
 export default function AuthLayout({
 	children,
 }: {
 	children: React.ReactNode;
 }) {
-	const { loading, isAuthenticated, permissions, logout } = useAuth();
+	const { loading, isAuthenticated, permissions } = useAuth();
 	const router = useRouter();
 	const { t } = useTranslation();
 
-	//////////////////////////////////////////////////////
-	// REDIRECT IF NOT AUTHENTICATED
-	//////////////////////////////////////////////////////
+	// ── Auth guard ────────────────────────────────────────────────────────────
 	useEffect(() => {
 		if (!loading && !isAuthenticated) {
 			router.replace('/login');
 		}
-	}, [loading, isAuthenticated]);
+	}, [loading, isAuthenticated, router]);
 
-	//////////////////////////////////////////////////////
-	// LOADING STATE
-	//////////////////////////////////////////////////////
+	// ── Build translated menu (re-runs only when locale changes) ─────────────
+	const menu = useMemo<MenuItem[]>(
+		() =>
+			BASE_MENU.map((item) => {
+				const key = menuKey(item.path);
+				const segment = item.path.replace(/^\//, '') || 'dashboard';
+
+				// Prioritize the custom fallbackLabel, otherwise generate one from the path
+				const fallback =
+					item.fallbackLabel ||
+					segment
+						.split('-')
+						.map((s) => s.charAt(0).toUpperCase() + s.slice(1))
+						.join(' ');
+
+				return { ...item, label: t(key, fallback) };
+			}),
+		[t]
+	);
+
+	// ── Loading state ─────────────────────────────────────────────────────────
 	if (loading) {
-		return <div style={{ padding: 40 }}>{t('common.loading')}</div>;
+		return <div className='p-10 text-slate-500'>{t('common.loading')}</div>;
 	}
 
-	if (!isAuthenticated) {
-		return null;
-	}
+	// ── Block render until auth confirmed ─────────────────────────────────────
+	if (!isAuthenticated) return null;
 
-	//////////////////////////////////////////////////////
-	// UI
-	//////////////////////////////////////////////////////
+	// ── UI ────────────────────────────────────────────────────────────────────
 	return (
-		<div style={{ display: 'flex', minHeight: '100vh' }}>
+		<div className='flex min-h-screen bg-slate-100'>
 			<Sidebar
-				menu={menu.map((m) => ({
-					...m,
-					name: t(`menu.${m.path.replace('/', '') || 'dashboard'}`),
-				}))}
+				menu={menu}
 				permissions={permissions}
 			/>
 
-			<main
-				style={{
-					flex: 1,
-					padding: 24,
-					background: '#f1f5f9',
-					display: 'flex',
-					flexDirection: 'column',
-					gap: 20,
-				}}>
-				<div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+			<main className='flex flex-1 flex-col gap-5 p-6'>
+				<div className='flex justify-end'>
 					<LanguageSwitcher />
 				</div>
 

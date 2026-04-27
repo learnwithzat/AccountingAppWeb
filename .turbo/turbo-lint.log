@@ -1,0 +1,209 @@
+
+> web@0.1.0 lint C:\Latest\ZatGo\AccountingApp\apps\web
+> eslint
+
+
+C:\Latest\ZatGo\AccountingApp\apps\web\src\app\(auth)\(core)\audit-log\page.tsx
+  10:35  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-explicit-any
+  23:3   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Latest\ZatGo\AccountingApp\apps\web\src\app\(auth)\(core)\audit-log\page.tsx:23:3
+  21 |
+  22 | 	useEffect(() => {
+> 23 | 		load();
+     | 		^^^^ Avoid calling setState() directly within an effect
+  24 | 	}, []);
+  25 |
+  26 | 	//////////////////////////////////////////////////////  react-hooks/set-state-in-effect
+  56:20  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @typescript-eslint/no-explicit-any
+
+C:\Latest\ZatGo\AccountingApp\apps\web\src\app\(auth)\(core)\branch\page.tsx
+  11:43  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-explicit-any
+  12:45  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-explicit-any
+  32:3   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Latest\ZatGo\AccountingApp\apps\web\src\app\(auth)\(core)\branch\page.tsx:32:3
+  30 |
+  31 | 	useEffect(() => {
+> 32 | 		load();
+     | 		^^^^ Avoid calling setState() directly within an effect
+  33 | 	}, []);
+  34 |
+  35 | 	//////////////////////////////////////////////////////  react-hooks/set-state-in-effect
+  69:20  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-explicit-any
+
+C:\Latest\ZatGo\AccountingApp\apps\web\src\app\(auth)\(core)\company\page.tsx
+  11:45  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        @typescript-eslint/no-explicit-any
+  27:3   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Latest\ZatGo\AccountingApp\apps\web\src\app\(auth)\(core)\company\page.tsx:27:3
+  25 |
+  26 | 	useEffect(() => {
+> 27 | 		load();
+     | 		^^^^ Avoid calling setState() directly within an effect
+  28 | 	}, []);
+  29 |
+  30 | 	//////////////////////////////////////////////////////  react-hooks/set-state-in-effect
+  60:20  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        @typescript-eslint/no-explicit-any
+
+C:\Latest\ZatGo\AccountingApp\apps\web\src\app\(auth)\(core)\dashboard\page.tsx
+   20:49  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  130:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Latest\ZatGo\AccountingApp\apps\web\src\app\(auth)\(core)\membership\page.tsx
+  59:5  warning  React Hook useEffect has a missing dependency: 't'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Latest\ZatGo\AccountingApp\apps\web\src\app\(auth)\(core)\plan\page.tsx
+  11:37  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-explicit-any
+  29:3   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Latest\ZatGo\AccountingApp\apps\web\src\app\(auth)\(core)\plan\page.tsx:29:3
+  27 |
+  28 | 	useEffect(() => {
+> 29 | 		load();
+     | 		^^^^ Avoid calling setState() directly within an effect
+  30 | 	}, []);
+  31 |
+  32 | 	//////////////////////////////////////////////////////  react-hooks/set-state-in-effect
+  65:20  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-explicit-any
+  71:20  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-explicit-any
+
+C:\Latest\ZatGo\AccountingApp\apps\web\src\app\(auth)\(core)\subscription\page.tsx
+   9:35  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-explicit-any
+  10:37  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-explicit-any
+  29:3   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Latest\ZatGo\AccountingApp\apps\web\src\app\(auth)\(core)\subscription\page.tsx:29:3
+  27 |
+  28 | 	useEffect(() => {
+> 29 | 		load();
+     | 		^^^^ Avoid calling setState() directly within an effect
+  30 | 	}, []);
+  31 |
+  32 | 	//////////////////////////////////////////////////////  react-hooks/set-state-in-effect
+
+C:\Latest\ZatGo\AccountingApp\apps\web\src\app\(auth)\(core)\user\page.tsx
+   16:37  error    Unexpected any. Specify a different type                                                                                        @typescript-eslint/no-explicit-any
+   17:37  error    Unexpected any. Specify a different type                                                                                        @typescript-eslint/no-explicit-any
+   70:5   warning  React Hook useEffect has missing dependencies: 'loadRoles' and 'loadUsers'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  202:12  error    Unexpected any. Specify a different type                                                                                        @typescript-eslint/no-explicit-any
+
+C:\Latest\ZatGo\AccountingApp\apps\web\src\app\(auth)\(custom)\expiremanage\hook\useDocuments.ts
+  21:13  warning  'err' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Latest\ZatGo\AccountingApp\apps\web\src\app\(auth)\(custom)\expiremanage\page.tsx
+  17:16  warning  'setRange' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Latest\ZatGo\AccountingApp\apps\web\src\app\(auth)\layout.tsx
+  38:49  warning  'logout' is assigned a value but never used                                                                @typescript-eslint/no-unused-vars
+  49:5   warning  React Hook useEffect has a missing dependency: 'router'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Latest\ZatGo\AccountingApp\apps\web\src\app\(public)\login\page.tsx
+  17:8   warning  'router' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  44:15  error    Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+
+C:\Latest\ZatGo\AccountingApp\apps\web\src\app\(public)\register\page.tsx
+   14:10  warning  'AuthService' is defined but never used          @typescript-eslint/no-unused-vars
+   18:8   warning  'router' is assigned a value but never used      @typescript-eslint/no-unused-vars
+   38:18  warning  'setLoading' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   39:16  warning  'setError' is assigned a value but never used    @typescript-eslint/no-unused-vars
+  160:10  warning  'handleSetup' is defined but never used          @typescript-eslint/no-unused-vars
+  160:22  warning  'arg0' is defined but never used                 @typescript-eslint/no-unused-vars
+
+C:\Latest\ZatGo\AccountingApp\apps\web\src\app\(public)\setup\page.tsx
+  14:10  warning  'TenantService' is defined but never used        @typescript-eslint/no-unused-vars
+  15:10  warning  'AuthService' is defined but never used          @typescript-eslint/no-unused-vars
+  18:8   warning  'router' is assigned a value but never used      @typescript-eslint/no-unused-vars
+  29:18  warning  'setLoading' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  30:16  warning  'setError' is assigned a value but never used    @typescript-eslint/no-unused-vars
+
+C:\Latest\ZatGo\AccountingApp\apps\web\src\app\page.tsx
+  21:5  warning  React Hook useEffect has a missing dependency: 'router'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Latest\ZatGo\AccountingApp\apps\web\src\components\layout\Sidebar.tsx
+  10:56  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  23:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  72:30  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Latest\ZatGo\AccountingApp\apps\web\src\components\providers\AuthProvider.tsx
+   15:8   error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+   16:10  error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+   17:8   error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+   31:35  error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+   32:39  error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+   33:35  error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+   44:36  error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+   45:30  error    Unexpected any. Specify a different type                                                                     @typescript-eslint/no-explicit-any
+  148:5   warning  React Hook useEffect has a missing dependency: 'initAuth'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Latest\ZatGo\AccountingApp\apps\web\src\hooks\useSetup.ts
+  13:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  35:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Latest\ZatGo\AccountingApp\apps\web\src\services\auth.service.ts
+  49:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  69:18  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Latest\ZatGo\AccountingApp\apps\web\src\services\billing.service.ts
+  13:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  17:31  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  36:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Latest\ZatGo\AccountingApp\apps\web\src\services\membership.service.ts
+  8:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Latest\ZatGo\AccountingApp\apps\web\src\services\org.service.ts
+  17:34  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  38:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Latest\ZatGo\AccountingApp\apps\web\src\services\plan.service.ts
+  8:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  9:29  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Latest\ZatGo\AccountingApp\apps\web\src\services\role.service.ts
+  19:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  24:29  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Latest\ZatGo\AccountingApp\apps\web\src\services\subscription.service.ts
+  8:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Latest\ZatGo\AccountingApp\apps\web\src\services\tenant.service.ts
+   9:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  29:29  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Latest\ZatGo\AccountingApp\apps\web\src\services\user.service.ts
+  25:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  33:29  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+✖ 73 problems (53 errors, 20 warnings)
+

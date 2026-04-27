@@ -4,110 +4,133 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { AuthService } from '@/services/auth.service';
 import { useAuth } from '@/components/providers/AuthProvider';
+import { Button } from '@/components/ui/button';
+import { LogOut } from 'lucide-react';
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { MenuItem } from '@/app/(auth)/layout';
 
-export default function Sidebar({ menu, permissions }: any) {
+type SidebarProps = {
+	menu: MenuItem[];
+	permissions?: string[];
+};
+
+export default function Sidebar({ menu, permissions = [] }: SidebarProps) {
 	const pathname = usePathname();
 	const router = useRouter();
-	const { user, tenant, role, logout: ctxLogout } = useAuth();
+	const { user, tenant, role, logout } = useAuth();
 
-	//////////////////////////////////////////////////////
-	// SAFE PERMISSIONS (FIXED)
-	//////////////////////////////////////////////////////
-	const safePermissions = Array.isArray(permissions) ? permissions : [];
+	// ── Helpers ──────────────────────────────────────────────────────────────
+	const getInitials = (name: string) => {
+		return name
+			.split(' ')
+			.map((n) => n[0])
+			.join('')
+			.toUpperCase()
+			.slice(0, 2);
+	};
 
-	//////////////////////////////////////////////////////
-	// FILTER MENU (RBAC CORE)
-	//////////////////////////////////////////////////////
-	const filteredMenu = menu.filter((item: any) => {
-		// no permission required → always show
-		if (!item.permission) return true;
-
-		// super admin bypass (optional)
-		if (safePermissions.includes('all')) return true;
-
-		return safePermissions.includes(item.permission);
+	// ── RBAC filter ───────────────────────────────────────────────────────────
+	const filteredMenu = menu.filter(({ permission }) => {
+		if (!permission) return true;
+		if (permissions.includes('all')) return true;
+		return permissions.includes(permission);
 	});
 
-	//////////////////////////////////////////////////////
-	// LOGOUT
-	//////////////////////////////////////////////////////
-	const logout = () => {
-		AuthService.logout();
-		ctxLogout?.();
+	// ── Active-route check (avoids false prefix matches) ─────────────────────
+	const isActive = (path: string) =>
+		path === '/' ?
+			pathname === '/'
+		:	pathname === path || pathname.startsWith(path + '/');
+
+	// ── Logout ────────────────────────────────────────────────────────────────
+	// Delegates entirely to the auth context so there is a single source of
+	// truth; AuthProvider is responsible for clearing tokens/cookies.
+	const handleLogout = () => {
+		logout?.();
 		router.replace('/login');
 	};
 
-	//////////////////////////////////////////////////////
-	// ACTIVE ROUTE
-	//////////////////////////////////////////////////////
-	const isActive = (path: string) => {
-		if (path === '/') return pathname === '/';
-		return pathname.startsWith(path);
-	};
-
+	// ── UI ────────────────────────────────────────────────────────────────────
 	return (
-		<aside
-			style={{
-				width: 260,
-				background: '#0f172a',
-				color: 'white',
-				padding: 20,
-				display: 'flex',
-				flexDirection: 'column',
-			}}>
-			{/* HEADER */}
-			<div style={{ marginBottom: 20 }}>
-				<h2>SaaS ERP</h2>
+		<aside className='flex w-[260px] flex-col bg-slate-900 p-5 text-white'>
+			{/* Header */}
+			<div className='mb-5'>
+				<h2 className='text-lg font-semibold'>SaaS ERP</h2>
 
-				<div style={{ fontSize: 12, color: '#94a3b8', marginTop: 6 }}>
-					<div>{tenant?.name || 'No Tenant'}</div>
-					<div>{role?.name || 'No Role'}</div>
+				<div className='mt-2 space-y-0.5 text-xs text-slate-400'>
+					<p>{tenant?.name ?? 'No Tenant'}</p>
+					<p>{role?.name ?? 'No Role'}</p>
 				</div>
 			</div>
 
-			{/* NAV */}
-			<nav style={{ flex: 1 }}>
-				{filteredMenu.map((item: any) => (
-					<Link
-						key={item.path}
-						href={item.path}
-						style={{ textDecoration: 'none' }}>
-						<div
-							style={{
-								padding: '10px 12px',
-								marginBottom: 6,
-								borderRadius: 6,
-								cursor: 'pointer',
-								background: isActive(item.path) ? '#1e293b' : 'transparent',
-								transition: '0.2s',
-							}}>
-							{item.name}
-						</div>
-					</Link>
+			{/* Navigation */}
+			<nav className='flex-1 space-y-0.5'>
+				{filteredMenu.map(({ path, label }) => (
+					<Tooltip key={path}>
+						<TooltipTrigger
+							render={
+								<Link
+									href={path}
+									className={`block rounded-md px-3 py-2 text-sm transition-colors ${
+										isActive(path) ?
+											'bg-slate-700 text-white'
+										:	'text-slate-300 hover:bg-slate-800 hover:text-white'
+									}`}
+								/>
+							}>
+							{label}
+						</TooltipTrigger>
+						<TooltipContent side='right'>{label}</TooltipContent>
+					</Tooltip>
 				))}
 			</nav>
 
-			{/* USER */}
-			<div style={{ marginTop: 10, fontSize: 12, color: '#94a3b8' }}>
-				{user?.name}
-			</div>
+			{/* User info */}
+			{user && (
+				<div className='mt-4 border-t border-slate-800 pt-4 pb-2'>
+					<Tooltip>
+						<TooltipTrigger
+							render={<div className='flex items-center gap-3 px-1' />}>
+							<div className='flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-bold text-white ring-2 ring-slate-800'>
+								{getInitials(user.name || user.email || 'U')}
+							</div>
+							<div className='min-w-0 flex-1 overflow-hidden text-left'>
+								<p className='truncate text-sm font-medium text-slate-200'>
+									{user.name || 'User'}
+								</p>
+								{user.email && (
+									<p className='truncate text-[10px] text-slate-500'>
+										{user.email}
+									</p>
+								)}
+							</div>
+						</TooltipTrigger>
+						<TooltipContent side='right'>Manage Profile</TooltipContent>
+					</Tooltip>
+				</div>
+			)}
 
-			{/* LOGOUT */}
-			<button
-				onClick={logout}
-				style={{
-					marginTop: 10,
-					padding: 10,
-					background: '#ef4444',
-					borderRadius: 6,
-					color: 'white',
-					border: 'none',
-					cursor: 'pointer',
-				}}>
-				Logout
-			</button>
+			{/* Logout */}
+			<Tooltip>
+				<TooltipTrigger
+					render={
+						<Button
+							variant='ghost'
+							size='sm'
+							onClick={handleLogout}
+							className='mt-3 w-full justify-start text-slate-400 hover:bg-red-500/10 hover:text-red-400'
+						/>
+					}>
+					<LogOut className='mr-2 h-4 w-4' />
+					<span>Logout</span>
+				</TooltipTrigger>
+				<TooltipContent side='right'>Sign out of your account</TooltipContent>
+			</Tooltip>
 		</aside>
 	);
 }

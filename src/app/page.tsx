@@ -4,21 +4,22 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { AuthService } from '@/services/auth.service';
 
+import { useAuth } from '@/components/providers/AuthProvider';
+
+/**
+ * Root redirect page — waits for the auth context to resolve before
+ * navigating, so we never flash a redirect based on a stale/missing token.
+ */
 export default function RootPage() {
 	const router = useRouter();
+	const { loading, isAuthenticated } = useAuth();
 
 	useEffect(() => {
-		const token = AuthService.getToken();
+		if (loading) return;
+		router.replace(isAuthenticated ? '/dashboard' : '/login');
+	}, [loading, isAuthenticated, router]);
 
-		if (!token) {
-			router.replace('/login');
-			return;
-		}
-
-		router.replace('/dashboard');
-	}, []);
-
-	return <div style={{ padding: 40 }}>Loading...</div>;
+	// Render nothing visible — the redirect happens immediately after hydration.
+	return null;
 }
